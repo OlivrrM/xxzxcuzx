@@ -3,7 +3,7 @@ function App() {
   return (
     <div className="App">
       <h1>Welcome to xxzxcuzx.com</h1>
-      <img alt="stupid" src="/Images/down.gif" />
+      <img alt="We'll be back" src="/Images/down.gif" />
     </div>
   );
 }
