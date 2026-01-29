@@ -4,6 +4,7 @@ body {
   text-align: center;
   background-image: url("../public/Images/background.jpg");
   background-repeat: repeat;
+  font-family: 'Times New Roman', Times, serif;
 }
 
 h1{
