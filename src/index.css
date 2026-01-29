@@ -2,7 +2,7 @@ body {
   margin: 0;
   background-color: black;
   text-align: center;
-  background-image: url("../public/Images/background.jpg");
+  /* background-image: url("../public/Images/background.jpg"); */
   background-repeat: repeat;
 }
 
