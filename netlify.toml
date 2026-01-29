@@ -7,3 +7,6 @@
   command = "npm run build"
   publish = "build"   # CRA
   # publish = "dist"  # Vite
+
+[build.environment]
+  NODE_VERSION = "18"
