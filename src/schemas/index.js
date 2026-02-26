@@ -12,6 +12,8 @@ export const photographySchema = z.object({
 
 export const softwareSchema = z.object({
   name: z.string(),
+  src: z.string().url().optional(),
+  path: z.string().optional(),
   description: z.string().optional(),
   url: z.string().url().optional(),
   dateCreated: z.string().optional(),

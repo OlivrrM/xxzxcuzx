@@ -3,6 +3,7 @@ import React from "react";
 import random from "../assets/random.png";
 import { useNavigate } from "react-router";
 import useImages from "../hooks/useImages";
+import Masonry from "react-masonry-css";
 
 const Photography = () => {
   const navigate = useNavigate();
@@ -14,8 +15,15 @@ const Photography = () => {
     navigate(`/photography/${randomIndex}`);
   };
 
+  const breakpointColumnsObj = {
+    default: 4,
+    1100: 3,
+    700: 2,
+    500: 1,
+  };
+
   return (
-    <div className="p-4">
+    <div className="p-4 mx-auto max-w-7xl">
       <img
         onClick={handleRandomClick}
         src={random}
@@ -25,18 +33,24 @@ const Photography = () => {
       {loading && <p>Loading photographs…</p>}
       {error && <p className="text-red-600">Unable to load photographs.</p>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
-        {images.map((img, idx) => (
-          <div
-            key={idx}
-            className="mb-4 cursor-pointer"
-            onClick={() => {
-              navigate(`/photography/${idx}`);
-            }}
-          >
-            <img src={img.src} alt={img.name} className="w-full h-auto" />
-          </div>
-        ))}
+      <div className="mx-auto">
+        <Masonry
+          breakpointCols={breakpointColumnsObj}
+          className="flex w-auto -ml-4"
+          columnClassName="pl-4"
+        >
+          {images.map((img, idx) => (
+            <div
+              key={img.id || idx}
+              className="mb-4 cursor-pointer"
+              onClick={() => {
+                navigate(`/photography/${idx}`);
+              }}
+            >
+              <img src={img.src} alt={img.name} className="w-full h-auto" />
+            </div>
+          ))}
+        </Masonry>
       </div>
     </div>
   );

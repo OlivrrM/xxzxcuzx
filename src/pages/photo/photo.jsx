@@ -35,13 +35,19 @@ const Photo = () => {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">{image.name}</h1>
-      <img src={image.src} alt={image.name} className="w-full h-auto" />
+    <div className="p-4 flex flex-col items-center text-center">
+      <h1 className="text-2xl font-bold mb-4 italic">{image.name}</h1>
+      <img src={image.src} alt={image.name} className="w-1/2 h-auto" />
       <p className="mt-4 text-lg text-red-500">{image.description}</p>
-      <p className="mt-2 text-lg text-red-500">{image.date}</p>
-      <p className="mt-2 text-lg text-red-500">{image.location}</p>
-      <p className="mt-2 text-lg text-red-500">Camera: {image.cameraModel}</p>
+      <p className="mt-2 text-lg text-red-500">
+        <b>Date:</b> {image.dateCreated}
+      </p>
+      <p className="mt-2 text-lg text-red-500">
+        <b>Location:</b> {image.location}
+      </p>
+      <p className="mt-2 text-lg text-red-500">
+        <b>Camera:</b> {image.cameraModel}
+      </p>
     </div>
   );
 };
