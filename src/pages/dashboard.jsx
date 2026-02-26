@@ -103,18 +103,18 @@ const Dashboard = () => {
     try {
       await deleteDoc(doc(db, "photography", item.id));
       if (item.path) {
-        console.log('deleting remote file at path', item.path);
+        console.log("deleting remote file at path", item.path);
         try {
           await deleteFileFromGitHub(item.path);
         } catch (ghErr) {
-          console.error('GitHub deletion failed', ghErr);
+          console.error("GitHub deletion failed", ghErr);
           // still proceed, but inform user
           setStatus(`Firestore deleted; GitHub error: ${ghErr.message}`);
           reload();
           return;
         }
       } else {
-        console.log('no path stored for item, skipping GitHub delete');
+        console.log("no path stored for item, skipping GitHub delete");
       }
       setStatus("Deleted");
       reload();
@@ -141,28 +141,30 @@ const Dashboard = () => {
         <p>Loading entries…</p>
       ) : (
         <div className="grid grid-cols-3 gap-4 mb-4">
-          {photos.filter(p => {
-                    if (!p.id) {
-                      console.warn('Dashboard: skipping photo without id', p);
-                      return false;
-                    }
-                    return true;
-                  }).map((p) => (
-            <div key={p.id || p.path} className="relative group">
-              <img
-                src={p.src}
-                alt={p.name || "photo"}
-                className="w-full h-auto object-cover rounded"
-              />
-              <button
-                type="button"
-                onClick={() => handleDelete(p)}
-                className="absolute top-1 right-1 bg-white bg-opacity-75 text-red-600 rounded px-1 py-0.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
+          {photos
+            .filter((p) => {
+              if (!p.id) {
+                console.warn("Dashboard: skipping photo without id", p);
+                return false;
+              }
+              return true;
+            })
+            .map((p) => (
+              <div key={p.id || p.path} className="relative group">
+                <img
+                  src={p.src}
+                  alt={p.name || "photo"}
+                  className="w-full h-auto object-cover rounded"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleDelete(p)}
+                  className="absolute top-1 right-1 bg-white bg-opacity-75 text-red-600 rounded px-1 py-0.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">

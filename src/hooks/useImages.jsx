@@ -35,7 +35,7 @@ export default function useImages(name = "photography") {
           // occasionally a document may have no id (very unlikely) – drop it
           .filter((item) => {
             if (!item.id) {
-              console.warn('useImages: skipping doc without id', item);
+              console.warn("useImages: skipping doc without id", item);
               return false;
             }
             return true;
