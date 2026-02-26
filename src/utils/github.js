@@ -9,7 +9,6 @@ async function api(path, options = {}) {
   const token = process.env.REACT_APP_GITHUB_TOKEN;
   const owner = process.env.REACT_APP_GITHUB_OWNER;
   const repo = process.env.REACT_APP_GITHUB_REPO;
-  const branch = process.env.REACT_APP_GITHUB_BRANCH || 'main';
 
   if (!token || !owner || !repo) {
     throw new Error('GitHub configuration missing in environment variables');
