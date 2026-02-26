@@ -1,0 +1,20 @@
+import { z } from 'zod';
+
+export const photographySchema = z.object({
+  name: z.string(),
+  src: z.string().url(),
+  path: z.string().optional(),
+  dateCreated: z.string().optional(),
+  description: z.string().optional(),
+  cameraModel: z.string().optional(),
+  location: z.string().optional(),
+});
+
+export const softwareSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  url: z.string().url().optional(),
+  dateCreated: z.string().optional(),
+});
+
+export const gamesSchema = softwareSchema;
