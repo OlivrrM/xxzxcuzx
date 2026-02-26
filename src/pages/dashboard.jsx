@@ -305,7 +305,7 @@ const Dashboard = () => {
               accept="image/*"
               onChange={handleFileSelect}
               className="text-black"
-              multiple={collection === 'photography'}
+              multiple={collection === "photography"}
             />
           </div>
         )}
@@ -437,7 +437,7 @@ const Dashboard = () => {
             Cancel Edit
           </button>
         )}
-        {(collection === 'software' || collection === 'games') && (
+        {(collection === "software" || collection === "games") && (
           <div>
             <label className="block text-sm font-medium mb-1">URL</label>
             <input
@@ -448,7 +448,7 @@ const Dashboard = () => {
             />
           </div>
         )}
-        {collection && collection !== 'photography' && (
+        {collection && collection !== "photography" && (
           <div>
             <label className="block text-sm font-medium mb-1">
               Date created (optional)
