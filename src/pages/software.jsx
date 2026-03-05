@@ -4,15 +4,16 @@ import notAvailable from "../assets/down.gif";
 
 const Software = () => {
   const { data: items, loading, error } = useImages("software");
+  const disabled = false;
 
-  // temp disabled
-  return (
-    <div className="flex flex-1 justify-center items-center p-4">
-      <img src={notAvailable} alt="Not available" className="w-[300px] h-auto pb-[300px]"/>
-    </div>
-  )
+  if (disabled) {
+    return (
+      <div className="flex flex-1 justify-center items-center p-4">
+        <img src={notAvailable} alt="Not available" className="w-[300px] h-auto pb-[300px]" />
+      </div>
+    );
+  }
 
-  // es-lint-ignore
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Software</h1>
