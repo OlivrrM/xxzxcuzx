@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 body {
   margin: 0;
   background-color: black;
@@ -17,9 +13,30 @@ body {
 
 h1{
   color: red;
-  /* animation: spin 2s infinite ease-in-out; */
 }
 
+button{
+  background-color: black;
+  padding: 3px 20px;
+  color: rgb(255, 255, 255);
+  text-align: center;
+  border-radius: 0px;
+  box-shadow: 0px 0px 15px 1px rgba(255, 0, 0, 1);
+  cursor: pointer;
+}
+
+button:disabled, select:disabled, input:disabled, textarea:disabled
+{
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+select, textarea, input{
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+  padding: 5px 5px;
+}
 
 @keyframes spin {
   0%{

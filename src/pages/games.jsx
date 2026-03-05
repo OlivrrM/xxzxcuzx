@@ -16,6 +16,13 @@ const Games = () => {
         {games.map((game) => (
           <li key={game.id} className="border p-3 rounded">
             <h2 className="font-semibold">{game.name}</h2>
+            {game.src && (
+              <img
+                src={game.src}
+                alt={game.name || "game"}
+                className="mt-2 w-full max-w-md h-auto rounded"
+              />
+            )}
             {game.description && <p>{game.description}</p>}
             {game.url && (
               <a
