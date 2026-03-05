@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router";
 import { FaApple, FaAndroid, FaWindows, FaLinux, FaSteam, FaMobileAlt } from "react-icons/fa";
 import useImages from "../hooks/useImages";
@@ -42,6 +42,8 @@ const parseGameEmbed = (value) => {
 };
 
 const GameDetail = () => {
+  const [showMoreInfo, setShowMoreInfo] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
   const { gameName } = useParams();
   const { data: games, loading, error } = useImages("games");
   const decodedName = decodeURIComponent(gameName || "");
@@ -97,12 +99,24 @@ const GameDetail = () => {
     { label: "Released status", value: formatStatus(game.releasedStatus) },
     { label: "Updated", value: game.updated },
     { label: "Published", value: game.published },
-    { label: "Credits", value: game.credits },
   ].filter((item) => Boolean(item.value));
+
+  let creditEntries = [];
+  if (Array.isArray(game.credits)) {
+    creditEntries = game.credits.filter((entry) => entry?.name || entry?.role);
+  } else {
+    const legacyCredits = String(game.credits || "").trim();
+    if (legacyCredits) {
+      creditEntries = [{ name: legacyCredits, role: "Credit" }];
+    }
+  }
+  const hasCredits = creditEntries.length > 0;
 
   const rawEmbed = String(game.url || "").trim();
   const hasIframeMarkup = /^<iframe\b/i.test(rawEmbed);
   const canRenderEmbed = game.gameType === "web games" && hasIframeMarkup;
+  const showDetailImageGrid = game.gameType === "pc games" || game.gameType === "hacks";
+  const detailImages = Array.isArray(game.detailImages) ? game.detailImages : [];
   const embed = parseGameEmbed(game.url);
   const embedRatio =
     embed?.width && embed?.height ? `${embed.width} / ${embed.height}` : "16 / 9";
@@ -146,6 +160,19 @@ const GameDetail = () => {
           <p className="text-white">{game.description}</p>
         )}
 
+        {showDetailImageGrid && detailImages.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {detailImages.map((imageSrc, index) => (
+              <img
+                key={`${imageSrc}-${index}`}
+                src={imageSrc}
+                alt={`${game.name || "Game"} detail ${index + 1}`}
+                className="w-full h-auto border border-white/30"
+              />
+            ))}
+          </div>
+        )}
+
         <div>
           <h2 className="text-lg font-semibold mb-2 text-white">Download Links</h2>
           {platformLinks.length > 0 ? (
@@ -169,16 +196,54 @@ const GameDetail = () => {
           )}
         </div>
 
-        {gameMoreInfo.length > 0 && (
-          <div className="pt-2">
-            <h2 className="text-lg font-semibold mb-2 text-white">More Information</h2>
-            <div className="space-y-1">
-              {gameMoreInfo.map((item) => (
-                <p key={item.label} className="text-white">
-                  <span className="font-semibold">{item.label}:</span> {item.value}
-                </p>
-              ))}
-            </div>
+        {(gameMoreInfo.length > 0 || hasCredits) && (
+          <div className="pt-2 flex flex-col items-center gap-3">
+            {gameMoreInfo.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowMoreInfo((prev) => !prev)}
+                className="text-white underline font-semibold bg-transparent shadow-none"
+              >
+                More Information
+              </button>
+            )}
+
+            {showMoreInfo && gameMoreInfo.length > 0 && (
+              <div className="border border-white p-3 w-fit mx-auto space-y-1">
+                {gameMoreInfo.map((item) => (
+                  <p key={item.label} className="text-white">
+                    <span className="font-semibold">{item.label}:</span> {item.value}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {hasCredits && (
+              <button
+                type="button"
+                onClick={() => setShowCredits((prev) => !prev)}
+                className="text-white underline font-semibold bg-transparent shadow-none"
+              >
+                Credits
+              </button>
+            )}
+
+            {showCredits && hasCredits && (
+              <div className="border border-white p-3 w-fit mx-auto">
+                <div className="space-y-1">
+                  {creditEntries.map((credit, index) => (
+                    <p
+                      key={`${credit.name || "credit"}-${credit.role || "role"}-${index}`}
+                      className="text-white"
+                    >
+                      {credit.name && <span className="font-semibold">{credit.name}</span>}
+                      {credit.name && credit.role ? " — " : ""}
+                      {credit.role}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

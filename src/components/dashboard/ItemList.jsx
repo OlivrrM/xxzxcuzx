@@ -2,7 +2,15 @@ import React from "react";
 import PropTypes from "prop-types";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 
-const ItemList = ({ section, items, loading, onEdit, onDelete }) => {
+const ItemList = ({
+  section,
+  items,
+  loading,
+  onEdit,
+  onDelete,
+  containerClassName,
+  mediaGridClassName,
+}) => {
   if (loading) {
     return <p>Loading entries…</p>;
   }
@@ -18,9 +26,11 @@ const ItemList = ({ section, items, loading, onEdit, onDelete }) => {
 
   if (section === "photography" || section === "games") {
     return (
-      <div>
+      <div className={containerClassName}>
         <h3 className="text-xl text-start font-semibold mb-3">{listTitle}</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
+        <div
+          className={`grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[800px] overflow-y-auto ${mediaGridClassName}`}
+        >
           {safeItems.map((item) => (
             <div key={item.id || item.path} className="relative group">
               <img
@@ -115,11 +125,15 @@ ItemList.propTypes = {
   loading: PropTypes.bool,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  containerClassName: PropTypes.string,
+  mediaGridClassName: PropTypes.string,
 };
 
 ItemList.defaultProps = {
   items: [],
   loading: false,
+  containerClassName: "",
+  mediaGridClassName: "",
 };
 
 export default ItemList;

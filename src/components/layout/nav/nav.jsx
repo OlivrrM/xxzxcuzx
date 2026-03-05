@@ -24,7 +24,8 @@ const Nav = () => {
         <div className="fixed bottom-0 right-0 z-[1000] m-4 flex gap-6">
           <Link
             to="/dashboard"
-            className="app-btn app-btn-secondary"
+            className="app-btn bg-black app-btn-secondary p-[3px_20px] text-white"
+            style={{ boxShadow: "0px 0px 15px 1px rgba(255, 0, 0, 1)" }}
           >
             Dashboard
           </Link>

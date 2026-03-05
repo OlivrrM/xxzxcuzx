@@ -97,7 +97,12 @@ const Dashboard = () => {
     releasedStatus: "",
     updated: "",
     published: "",
-    credits: "",
+    credits: [],
+    creditName: "",
+    creditRole: "",
+    detailFiles: [],
+    detailImages: [],
+    detailImagePaths: [],
     url: "",
     description: "",
   });
@@ -392,7 +397,12 @@ const Dashboard = () => {
       releasedStatus: "",
       updated: "",
       published: "",
-      credits: "",
+      credits: [],
+      creditName: "",
+      creditRole: "",
+      detailFiles: [],
+      detailImages: [],
+      detailImagePaths: [],
       url: "",
       description: "",
     });
@@ -434,10 +444,52 @@ const Dashboard = () => {
       releasedStatus: "",
       updated: "",
       published: "",
-      credits: "",
+      credits: [],
+      creditName: "",
+      creditRole: "",
+      detailFiles: [],
+      detailImages: [],
+      detailImagePaths: [],
       url: "",
       description: "",
     }));
+  };
+
+  const isPcOrHackGameType = (value) => value === "pc games" || value === "hacks";
+
+  const uploadGamesDetailImages = async (files) => {
+    const uploaded = [];
+    for (const [index, file] of files.entries()) {
+      const path = `games/details/${Date.now()}_${index}_${file.name}`;
+      const src = await uploadFileToGitHub(file, path);
+      uploaded.push({ src, path });
+    }
+    return uploaded;
+  };
+
+  const normalizeCredits = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((entry) => ({
+          name: String(entry?.name || "").trim(),
+          role: String(entry?.role || "").trim(),
+        }))
+        .filter((entry) => entry.name && entry.role);
+    }
+
+    const legacyCredit = String(value || "").trim();
+    return legacyCredit ? [{ name: legacyCredit, role: "Credit" }] : [];
+  };
+
+  const areCreditsEqual = (left, right) => {
+    const normalizedLeft = normalizeCredits(left);
+    const normalizedRight = normalizeCredits(right);
+    if (normalizedLeft.length !== normalizedRight.length) return false;
+
+    return normalizedLeft.every((credit, index) => {
+      const other = normalizedRight[index];
+      return credit.name === other.name && credit.role === other.role;
+    });
   };
 
   const getGamesPlatformLinksPayload = (form) => {
@@ -467,8 +519,8 @@ const Dashboard = () => {
     if (form.releasedStatus) payload.releasedStatus = form.releasedStatus;
     if (form.updated) payload.updated = form.updated;
     if (form.published) payload.published = form.published;
-    const credits = form.credits?.trim();
-    if (credits) payload.credits = credits;
+    const credits = normalizeCredits(form.credits);
+    if (credits.length > 0) payload.credits = credits;
     return payload;
   };
 
@@ -844,6 +896,21 @@ const Dashboard = () => {
         Object.assign(updates, getGamesPlatformLinksPayload(gamesForm));
         Object.assign(updates, getGamesMoreInfoPayload(gamesForm));
 
+        if (isPcOrHackGameType(gamesForm.gameType) && gamesForm.detailFiles.length > 0) {
+          setSectionStatus("games", "Uploading additional images...");
+          const uploadedDetails = await uploadGamesDetailImages(gamesForm.detailFiles);
+          const existingImages = Array.isArray(gamesForm.detailImages) ? gamesForm.detailImages : [];
+          const existingPaths = Array.isArray(gamesForm.detailImagePaths)
+            ? gamesForm.detailImagePaths
+            : [];
+
+          updates.detailImages = [...existingImages, ...uploadedDetails.map((entry) => entry.src)];
+          updates.detailImagePaths = [
+            ...existingPaths,
+            ...uploadedDetails.map((entry) => entry.path),
+          ];
+        }
+
         if (gamesForm.file) {
           setSectionStatus("games", "Uploading replacement image...");
           const replacementPath = `games/${Date.now()}_${gamesForm.file.name}`;
@@ -874,6 +941,12 @@ const Dashboard = () => {
             const path = `games/${Date.now()}_${file.name}`;
             const src = await uploadFileToGitHub(file, path);
             throwIfCancelled("games");
+            let uploadedDetailImages = [];
+            if (isPcOrHackGameType(gamesForm.gameType) && gamesForm.detailFiles.length > 0) {
+              setSectionStatus("games", "Uploading additional images...");
+              uploadedDetailImages = await uploadGamesDetailImages(gamesForm.detailFiles);
+              throwIfCancelled("games");
+            }
             await addItem("games", {
               name: file.name,
               gameType: gamesForm.gameType,
@@ -881,6 +954,12 @@ const Dashboard = () => {
               borderColor: gamesForm.borderColor,
               src,
               path,
+              ...(uploadedDetailImages.length > 0
+                ? {
+                    detailImages: uploadedDetailImages.map((entry) => entry.src),
+                    detailImagePaths: uploadedDetailImages.map((entry) => entry.path),
+                  }
+                : {}),
               ...getGamesMoreInfoPayload(gamesForm),
               ...getGamesPlatformLinksPayload(gamesForm),
             });
@@ -894,6 +973,12 @@ const Dashboard = () => {
         const path = `games/${Date.now()}_${gamesForm.file.name}`;
         const src = await uploadFileToGitHub(gamesForm.file, path);
         throwIfCancelled("games");
+        let uploadedDetailImages = [];
+        if (isPcOrHackGameType(gamesForm.gameType) && gamesForm.detailFiles.length > 0) {
+          setSectionStatus("games", "Uploading additional images...");
+          uploadedDetailImages = await uploadGamesDetailImages(gamesForm.detailFiles);
+          throwIfCancelled("games");
+        }
         await addItem("games", {
           name: gamesForm.name || gamesForm.file.name,
           gameType: gamesForm.gameType,
@@ -902,6 +987,12 @@ const Dashboard = () => {
           src,
           path,
           description: gamesForm.description,
+          ...(uploadedDetailImages.length > 0
+            ? {
+                detailImages: uploadedDetailImages.map((entry) => entry.src),
+                detailImagePaths: uploadedDetailImages.map((entry) => entry.path),
+              }
+            : {}),
           ...getGamesEmbedPayload(gamesForm),
           ...getGamesMoreInfoPayload(gamesForm),
           ...getGamesPlatformLinksPayload(gamesForm),
@@ -968,6 +1059,16 @@ const Dashboard = () => {
         try {
           throwIfCancelled(collection);
           await deleteFileFromGitHub(item.path);
+
+          if (Array.isArray(item.detailImagePaths) && item.detailImagePaths.length > 0) {
+            for (const detailPath of item.detailImagePaths) {
+              try {
+                await deleteFileFromGitHub(detailPath);
+              } catch (detailError) {
+                console.warn("Failed to delete games detail image from GitHub", detailError);
+              }
+            }
+          }
         } catch (error) {
           setSectionStatus("games", `Firestore deleted; GitHub error: ${error.message}`);
           reloadGames();
@@ -1019,7 +1120,10 @@ const Dashboard = () => {
     !gamesForm.releasedStatus &&
     !gamesForm.updated &&
     !gamesForm.published &&
-    !gamesForm.credits &&
+    normalizeCredits(gamesForm.credits).length === 0 &&
+    !gamesForm.creditName &&
+    !gamesForm.creditRole &&
+    gamesForm.detailFiles.length === 0 &&
     !gamesForm.url &&
     !gamesForm.description;
 
@@ -1076,7 +1180,10 @@ const Dashboard = () => {
         gamesForm.releasedStatus === gamesEditSnapshot.releasedStatus &&
         gamesForm.updated === gamesEditSnapshot.updated &&
         gamesForm.published === gamesEditSnapshot.published &&
-        gamesForm.credits === gamesEditSnapshot.credits &&
+        areCreditsEqual(gamesForm.credits, gamesEditSnapshot.credits) &&
+        !gamesForm.creditName &&
+        !gamesForm.creditRole &&
+        gamesForm.detailFiles.length === 0 &&
         gamesForm.url === gamesEditSnapshot.url &&
         gamesForm.description === gamesEditSnapshot.description &&
         !gamesForm.file &&
@@ -1137,7 +1244,10 @@ const Dashboard = () => {
       gamesForm.releasedStatus === gamesEditSnapshot.releasedStatus &&
       gamesForm.updated === gamesEditSnapshot.updated &&
       gamesForm.published === gamesEditSnapshot.published &&
-      gamesForm.credits === gamesEditSnapshot.credits &&
+      areCreditsEqual(gamesForm.credits, gamesEditSnapshot.credits) &&
+      !gamesForm.creditName &&
+      !gamesForm.creditRole &&
+      gamesForm.detailFiles.length === 0 &&
       gamesForm.url === gamesEditSnapshot.url &&
       gamesForm.description === gamesEditSnapshot.description &&
       !gamesForm.file &&
@@ -1180,7 +1290,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <section className="relative bg-black/60 border border-white/20  p-6">
+        <section className="relative order-1 bg-black/60 border border-white/20 p-6 h-full flex flex-col min-h-0">
           {sectionBusy.photography && (
             <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
               <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
@@ -1220,7 +1330,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <form onSubmit={handlePhotographySubmit} className="w-full space-y-4 mb-6">
+          <form onSubmit={handlePhotographySubmit} className="w-full space-y-4 mb-6 shrink-0">
             <div className="flex gap-2 items-end flex-wrap">
               <div className="flex-1 min-w-[260px]">
                 <label className="block text-start text-sm font-medium mb-1" htmlFor="photo-file">
@@ -1519,6 +1629,8 @@ const Dashboard = () => {
               }
             }
             onDelete={(item) => handleDelete("photography", item)}
+            containerClassName="flex flex-col flex-1 min-h-0"
+            mediaGridClassName="max-h-none flex-1 min-h-0"
           />
 
           {status.photography && (
@@ -1529,7 +1641,7 @@ const Dashboard = () => {
           )}
         </section>
 
-        <section className="relative bg-black/60 border border-white/20  p-6">
+        <section className="relative order-3 bg-black/60 border border-white/20  p-6">
           {sectionBusy.software && (
             <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
               <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
@@ -1589,7 +1701,7 @@ const Dashboard = () => {
           {softwareError && <p className="mt-2 text-red-400">{softwareError.message}</p>}
         </section>
 
-        <section className="relative bg-black/60 border border-white/20  p-6">
+        <section className="relative order-2 bg-black/60 border border-white/20 p-6 h-full flex flex-col min-h-0">
           {sectionBusy.games && (
             <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
               <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
@@ -1643,7 +1755,14 @@ const Dashboard = () => {
                     releasedStatus: item.releasedStatus || "",
                     updated: item.updated || "",
                     published: item.published || "",
-                    credits: item.credits || "",
+                    credits: normalizeCredits(item.credits),
+                    creditName: "",
+                    creditRole: "",
+                    detailFiles: [],
+                    detailImages: Array.isArray(item.detailImages) ? item.detailImages : [],
+                    detailImagePaths: Array.isArray(item.detailImagePaths)
+                      ? item.detailImagePaths
+                      : [],
                     url: item.url || "",
                     description: item.description || "",
                   };
@@ -1657,13 +1776,14 @@ const Dashboard = () => {
                 }
               }
               onDelete={(item) => handleDelete("games", item)}
+              mediaGridClassName="max-h-[200px]"
             />
 
             {status.games && <p className="mt-3 text-sm text-green-300">{status.games}</p>}
             {gamesError && <p className="mt-2 text-red-400">{gamesError.message}</p>}
         </section>
 
-        <section className="relative bg-black/60 border border-white/20  p-6">
+        <section className="relative order-4 bg-black/60 border border-white/20  p-6">
           {sectionBusy.placeHolder && (
             <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
               <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />

@@ -31,8 +31,26 @@ const GenericEntryForm = ({
   const normalizedBorderColor = /^#[0-9A-Fa-f]{6}$/.test(formValues.borderColor || "")
     ? formValues.borderColor
     : "#ffffff";
+  const gameCredits = Array.isArray(formValues.credits) ? formValues.credits : [];
   const submitLabel = isEditing ? "Save" : "Upload";
   const idPrefix = `${section}-entry`;
+
+  const handleAddCredit = () => {
+    const name = formValues.creditName?.trim();
+    const role = formValues.creditRole?.trim();
+    if (!name || !role) return;
+
+    onChange("credits", [...gameCredits, { name, role }]);
+    onChange("creditName", "");
+    onChange("creditRole", "");
+  };
+
+  const handleDeleteCredit = (creditIndex) => {
+    onChange(
+      "credits",
+      gameCredits.filter((_, index) => index !== creditIndex)
+    );
+  };
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-4 mb-6">
@@ -131,6 +149,32 @@ const GenericEntryForm = ({
               <option value="hacks">Hacks</option>
             </select>
           </div>
+
+          {(formValues.gameType === "pc games" || formValues.gameType === "hacks") && (
+            <div>
+              <label
+                htmlFor={`${idPrefix}-detail-files`}
+                className="block text-start text-sm font-medium mb-1"
+              >
+                Additional images (optional)
+              </label>
+              <input
+                id={`${idPrefix}-detail-files`}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => onChange("detailFiles", Array.from(e.target.files || []))}
+                className="app-input w-full block"
+              />
+              {Array.isArray(formValues.detailFiles) && formValues.detailFiles.length > 0 && (
+                <p className="text-sm text-white/80 mt-1">
+                  {formValues.detailFiles.length} image
+                  {formValues.detailFiles.length === 1 ? "" : "s"} selected
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label
@@ -331,14 +375,57 @@ const GenericEntryForm = ({
                 >
                   Credits
                 </label>
-                <input
-                  id={`${idPrefix}-credits`}
-                  type="text"
-                  value={formValues.credits || ""}
-                  onChange={(e) => onChange("credits", e.target.value)}
-                  className="app-input w-full"
-                  placeholder="Team or contributor names"
-                />
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
+                    <input
+                      id={`${idPrefix}-credit-name`}
+                      type="text"
+                      value={formValues.creditName || ""}
+                      onChange={(e) => onChange("creditName", e.target.value)}
+                      className="app-input w-full"
+                      placeholder="Name"
+                    />
+                    <input
+                      id={`${idPrefix}-credit-role`}
+                      type="text"
+                      value={formValues.creditRole || ""}
+                      onChange={(e) => onChange("creditRole", e.target.value)}
+                      className="app-input w-full"
+                      placeholder="Role"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCredit}
+                      className="app-btn app-btn-secondary"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {gameCredits.length > 0 && (
+                    <div className="space-y-2">
+                      {gameCredits.map((credit, index) => (
+                        <div
+                          key={`${credit.name}-${credit.role}-${index}`}
+                          className="flex items-center justify-between gap-2 border border-white/20 p-2"
+                        >
+                          <p className="text-white text-sm text-start">
+                            <span className="font-semibold">{credit.name}</span>
+                            {" — "}
+                            {credit.role}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCredit(index)}
+                            className="app-btn app-btn-secondary"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -496,7 +583,17 @@ GenericEntryForm.propTypes = {
     releasedStatus: PropTypes.string,
     updated: PropTypes.string,
     published: PropTypes.string,
-    credits: PropTypes.string,
+    credits: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string,
+        role: PropTypes.string,
+      })
+    ),
+    creditName: PropTypes.string,
+    creditRole: PropTypes.string,
+    detailFiles: PropTypes.arrayOf(PropTypes.any),
+    detailImages: PropTypes.arrayOf(PropTypes.string),
+    detailImagePaths: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
