@@ -22,6 +22,10 @@ export const softwareSchema = z.object({
 export const gamesSchema = softwareSchema.extend({
   url: z.string().optional(),
   gameType: z.enum(["web games", "pc games", "hacks"]),
+  releasedStatus: z.enum(["released", "in development", "on hold", "cancelled", "prototype"]).optional(),
+  updated: z.string().optional(),
+  published: z.string().optional(),
+  credits: z.string().optional(),
   textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   borderColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   macLink: z.string().url().optional(),

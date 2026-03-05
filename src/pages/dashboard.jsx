@@ -94,6 +94,10 @@ const Dashboard = () => {
     windowsLink: "",
     linuxLink: "",
     steamLink: "",
+    releasedStatus: "",
+    updated: "",
+    published: "",
+    credits: "",
     url: "",
     description: "",
   });
@@ -385,6 +389,10 @@ const Dashboard = () => {
       windowsLink: "",
       linuxLink: "",
       steamLink: "",
+      releasedStatus: "",
+      updated: "",
+      published: "",
+      credits: "",
       url: "",
       description: "",
     });
@@ -423,6 +431,10 @@ const Dashboard = () => {
       windowsLink: "",
       linuxLink: "",
       steamLink: "",
+      releasedStatus: "",
+      updated: "",
+      published: "",
+      credits: "",
       url: "",
       description: "",
     }));
@@ -448,6 +460,16 @@ const Dashboard = () => {
   const getGamesEmbedPayload = (form) => {
     const embed = form.url?.trim();
     return embed ? { url: embed } : {};
+  };
+
+  const getGamesMoreInfoPayload = (form) => {
+    const payload = {};
+    if (form.releasedStatus) payload.releasedStatus = form.releasedStatus;
+    if (form.updated) payload.updated = form.updated;
+    if (form.published) payload.published = form.published;
+    const credits = form.credits?.trim();
+    if (credits) payload.credits = credits;
+    return payload;
   };
 
   const clearSimpleFormFields = (setter) => {
@@ -820,6 +842,7 @@ const Dashboard = () => {
         if (gamesForm.description) updates.description = gamesForm.description;
         Object.assign(updates, getGamesEmbedPayload(gamesForm));
         Object.assign(updates, getGamesPlatformLinksPayload(gamesForm));
+        Object.assign(updates, getGamesMoreInfoPayload(gamesForm));
 
         if (gamesForm.file) {
           setSectionStatus("games", "Uploading replacement image...");
@@ -858,6 +881,7 @@ const Dashboard = () => {
               borderColor: gamesForm.borderColor,
               src,
               path,
+              ...getGamesMoreInfoPayload(gamesForm),
               ...getGamesPlatformLinksPayload(gamesForm),
             });
           }
@@ -879,6 +903,7 @@ const Dashboard = () => {
           path,
           description: gamesForm.description,
           ...getGamesEmbedPayload(gamesForm),
+          ...getGamesMoreInfoPayload(gamesForm),
           ...getGamesPlatformLinksPayload(gamesForm),
         });
       };
@@ -991,6 +1016,10 @@ const Dashboard = () => {
     !gamesForm.windowsLink &&
     !gamesForm.linuxLink &&
     !gamesForm.steamLink &&
+    !gamesForm.releasedStatus &&
+    !gamesForm.updated &&
+    !gamesForm.published &&
+    !gamesForm.credits &&
     !gamesForm.url &&
     !gamesForm.description;
 
@@ -1044,6 +1073,10 @@ const Dashboard = () => {
         gamesForm.windowsLink === gamesEditSnapshot.windowsLink &&
         gamesForm.linuxLink === gamesEditSnapshot.linuxLink &&
         gamesForm.steamLink === gamesEditSnapshot.steamLink &&
+        gamesForm.releasedStatus === gamesEditSnapshot.releasedStatus &&
+        gamesForm.updated === gamesEditSnapshot.updated &&
+        gamesForm.published === gamesEditSnapshot.published &&
+        gamesForm.credits === gamesEditSnapshot.credits &&
         gamesForm.url === gamesEditSnapshot.url &&
         gamesForm.description === gamesEditSnapshot.description &&
         !gamesForm.file &&
@@ -1101,6 +1134,10 @@ const Dashboard = () => {
       gamesForm.windowsLink === gamesEditSnapshot.windowsLink &&
       gamesForm.linuxLink === gamesEditSnapshot.linuxLink &&
       gamesForm.steamLink === gamesEditSnapshot.steamLink &&
+      gamesForm.releasedStatus === gamesEditSnapshot.releasedStatus &&
+      gamesForm.updated === gamesEditSnapshot.updated &&
+      gamesForm.published === gamesEditSnapshot.published &&
+      gamesForm.credits === gamesEditSnapshot.credits &&
       gamesForm.url === gamesEditSnapshot.url &&
       gamesForm.description === gamesEditSnapshot.description &&
       !gamesForm.file &&
@@ -1603,6 +1640,10 @@ const Dashboard = () => {
                     windowsLink: item.windowsLink || "",
                     linuxLink: item.linuxLink || "",
                     steamLink: item.steamLink || "",
+                    releasedStatus: item.releasedStatus || "",
+                    updated: item.updated || "",
+                    published: item.published || "",
+                    credits: item.credits || "",
                     url: item.url || "",
                     description: item.description || "",
                   };

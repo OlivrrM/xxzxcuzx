@@ -265,6 +265,83 @@ const GenericEntryForm = ({
               </div>
             </div>
           </div>
+
+          <div>
+            <p className="block text-start text-sm font-medium mb-2">More information (optional)</p>
+            <div className="space-y-2">
+              <div>
+                <label
+                  htmlFor={`${idPrefix}-released-status`}
+                  className="block text-start text-sm font-medium mb-1"
+                >
+                  Released status
+                </label>
+                <select
+                  id={`${idPrefix}-released-status`}
+                  value={formValues.releasedStatus || ""}
+                  onChange={(e) => onChange("releasedStatus", e.target.value)}
+                  className="app-input w-full"
+                >
+                  <option value="">Select status</option>
+                  <option value="released">Released</option>
+                  <option value="in development">In development</option>
+                  <option value="on hold">On hold</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="prototype">Prototype</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <label
+                    htmlFor={`${idPrefix}-updated`}
+                    className="block text-start text-sm font-medium mb-1"
+                  >
+                    Updated
+                  </label>
+                  <input
+                    id={`${idPrefix}-updated`}
+                    type="date"
+                    value={formValues.updated || ""}
+                    onChange={(e) => onChange("updated", e.target.value)}
+                    className="app-input w-full"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor={`${idPrefix}-published`}
+                    className="block text-start text-sm font-medium mb-1"
+                  >
+                    Published
+                  </label>
+                  <input
+                    id={`${idPrefix}-published`}
+                    type="date"
+                    value={formValues.published || ""}
+                    onChange={(e) => onChange("published", e.target.value)}
+                    className="app-input w-full"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor={`${idPrefix}-credits`}
+                  className="block text-start text-sm font-medium mb-1"
+                >
+                  Credits
+                </label>
+                <input
+                  id={`${idPrefix}-credits`}
+                  type="text"
+                  value={formValues.credits || ""}
+                  onChange={(e) => onChange("credits", e.target.value)}
+                  className="app-input w-full"
+                  placeholder="Team or contributor names"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -416,6 +493,10 @@ GenericEntryForm.propTypes = {
     windowsLink: PropTypes.string,
     linuxLink: PropTypes.string,
     steamLink: PropTypes.string,
+    releasedStatus: PropTypes.string,
+    updated: PropTypes.string,
+    published: PropTypes.string,
+    credits: PropTypes.string,
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,

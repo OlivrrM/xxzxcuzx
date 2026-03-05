@@ -21,16 +21,16 @@ const Nav = () => {
     <nav className="relative z-10 p-2 m-4">
       {/* top-right buttons */}
       {user && (
-        <div className="fixed bottom-0 right-0 m-4 flex gap-6">
-          <button>
-            <Link
-              to="/dashboard"
-            >
-              Dashboard
-            </Link>
-          </button>
+        <div className="fixed bottom-0 right-0 z-[1000] m-4 flex gap-6">
+          <Link
+            to="/dashboard"
+            className="app-btn app-btn-secondary"
+          >
+            Dashboard
+          </Link>
           <button
             onClick={handleLogout}
+            className="app-btn app-btn-secondary"
           >
             Log out
           </button>

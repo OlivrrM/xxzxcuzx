@@ -85,6 +85,21 @@ const GameDetail = () => {
     { key: "steamLink", icon: FaSteam, label: "Steam" },
   ].filter((item) => Boolean(game[item.key]));
 
+  const formatStatus = (value) => {
+    if (!value) return "";
+    return value
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const gameMoreInfo = [
+    { label: "Released status", value: formatStatus(game.releasedStatus) },
+    { label: "Updated", value: game.updated },
+    { label: "Published", value: game.published },
+    { label: "Credits", value: game.credits },
+  ].filter((item) => Boolean(item.value));
+
   const rawEmbed = String(game.url || "").trim();
   const hasIframeMarkup = /^<iframe\b/i.test(rawEmbed);
   const canRenderEmbed = game.gameType === "web games" && hasIframeMarkup;
@@ -134,7 +149,7 @@ const GameDetail = () => {
         <div>
           <h2 className="text-lg font-semibold mb-2 text-white">Download Links</h2>
           {platformLinks.length > 0 ? (
-            <div className="flex items-center justify-center gap-5">
+            <div className="flex items-center justify-center gap-5 mt-2">
               {platformLinks.map(({ key, icon: Icon, label }) => (
                 <a
                   key={key}
@@ -153,6 +168,19 @@ const GameDetail = () => {
             <p className="text-white/80">No download links available.</p>
           )}
         </div>
+
+        {gameMoreInfo.length > 0 && (
+          <div className="pt-2">
+            <h2 className="text-lg font-semibold mb-2 text-white">More Information</h2>
+            <div className="space-y-1">
+              {gameMoreInfo.map((item) => (
+                <p key={item.label} className="text-white">
+                  <span className="font-semibold">{item.label}:</span> {item.value}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
