@@ -153,6 +153,13 @@ const Dashboard = () => {
       normalizedValue = value.value;
     }
 
+    if (typeof normalizedValue === "string") {
+      const cleaned = normalizedValue.replaceAll("\0", "").trim();
+      normalizedValue = cleaned
+        .replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3")
+        .replace(" ", "T");
+    }
+
     const date = new Date(normalizedValue);
     return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
   };
@@ -182,7 +189,9 @@ const Dashboard = () => {
     const createdDate = getFirstExifDate(metadata, [
       "DateTimeOriginal",
       "DateCreated",
+      "SubSecCreateDate",
       "SubSecDateTimeOriginal",
+      "DateTimeDigitized",
       "CreateDate",
       "MediaCreateDate",
       "TrackCreateDate",
@@ -192,7 +201,9 @@ const Dashboard = () => {
     const modifiedDate =
       getFirstExifDate(metadata, [
         "ModifyDate",
+        "SubSecModifyDate",
         "FileModifyDate",
+        "MetadataDate",
         "MediaModifyDate",
         "TrackModifyDate",
       ]) || normalizeExifDate(file?.lastModified);
@@ -239,6 +250,10 @@ const Dashboard = () => {
 
     try {
       const metadata = await parseExifSafe(file, "parsePhotoFileMeta");
+      console.log("[photo] full EXIF metadata (multiple)", {
+        fileName: file.name,
+        metadata,
+      });
       const extracted = extractPhotoExifFields(metadata, file);
 
       return {
@@ -429,6 +444,10 @@ const Dashboard = () => {
 
     try {
       const metadata = await parseExifSafe(singleFile, "handlePhotoFileSelect");
+      console.log("[photo] full EXIF metadata (single)", {
+        fileName: singleFile.name,
+        metadata,
+      });
       const extracted = extractPhotoExifFields(metadata, singleFile);
       console.log("[photo] parsed single metadata", {
         fileName: singleFile.name,
