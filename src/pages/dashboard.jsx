@@ -1035,19 +1035,41 @@ const Dashboard = () => {
           </div>
 
           <form onSubmit={handlePhotographySubmit} className="w-full space-y-4 mb-6">
-            <div>
-              <label className="block text-start text-sm font-medium mb-1" htmlFor="photo-file">
-                Image file{photoUploadMode === "multiple" ? "s" : ""}
-              </label>
-              <input
-                id="photo-file"
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoFileSelect}
-                className="app-input w-full block"
-                multiple={photoUploadMode === "multiple"}
-                disabled={Boolean(photoForm.editItem)}
-              />
+            <div className="flex gap-2 items-end flex-wrap">
+              <div className="flex-1 min-w-[260px]">
+                <label className="block text-start text-sm font-medium mb-1" htmlFor="photo-file">
+                  Image file{photoUploadMode === "multiple" ? "s" : ""}
+                </label>
+                <input
+                  id="photo-file"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoFileSelect}
+                  className={`app-input w-full block ${photoUploadMode === "multiple" ? "h-10" : ""}`}
+                  multiple={photoUploadMode === "multiple"}
+                  disabled={Boolean(photoForm.editItem)}
+                />
+              </div>
+              {photoUploadMode === "multiple" && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyPhotoBulkDateSource("created")}
+                    disabled={photoBulkDateSource === "created"}
+                    className="app-btn app-btn-secondary h-10"
+                  >
+                    Created
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPhotoBulkDateSource("modified")}
+                    disabled={photoBulkDateSource === "modified"}
+                    className="app-btn app-btn-secondary h-10"
+                  >
+                    Modified
+                  </button>
+                </div>
+              )}
             </div>
 
             {photoUploadMode === "single" && (
@@ -1154,28 +1176,6 @@ const Dashboard = () => {
 
             {photoUploadMode === "multiple" && (
               <>
-                <div>
-                  <p className="block text-start text-sm font-medium mb-1">Date source for all files</p>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => applyPhotoBulkDateSource("created")}
-                      disabled={photoBulkDateSource === "created"}
-                      className="app-btn app-btn-secondary"
-                    >
-                      Created
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => applyPhotoBulkDateSource("modified")}
-                      disabled={photoBulkDateSource === "modified"}
-                      className="app-btn app-btn-secondary"
-                    >
-                      Modified
-                    </button>
-                  </div>
-                </div>
-
                 {photoMassMeta.length > 0 && (
                   <div className="space-y-3">
                     {photoMassMeta.map((meta, index) => (
