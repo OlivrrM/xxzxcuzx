@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { FaApple, FaAndroid, FaWindows, FaLinux, FaSteam, FaMobileAlt } from "react-icons/fa";
 
 const GenericEntryForm = ({
   section,
@@ -169,6 +170,83 @@ const GenericEntryForm = ({
               </div>
             </div>
           </div>
+
+          <div>
+            <p className="block text-start text-sm font-medium mb-2">Download links (optional)</p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <FaApple className="text-white" aria-hidden="true" />
+                <input
+                  id={`${idPrefix}-mac-link`}
+                  type="url"
+                  value={formValues.macLink || ""}
+                  onChange={(e) => onChange("macLink", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaMobileAlt className="text-white" aria-hidden="true" />
+                <input
+                  id={`${idPrefix}-ios-link`}
+                  type="url"
+                  value={formValues.iosLink || ""}
+                  onChange={(e) => onChange("iosLink", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaAndroid className="text-white" aria-hidden="true" />
+                <input
+                  id={`${idPrefix}-android-link`}
+                  type="url"
+                  value={formValues.androidLink || ""}
+                  onChange={(e) => onChange("androidLink", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaWindows className="text-white" aria-hidden="true" />
+                <input
+                  id={`${idPrefix}-windows-link`}
+                  type="url"
+                  value={formValues.windowsLink || ""}
+                  onChange={(e) => onChange("windowsLink", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaLinux className="text-white" aria-hidden="true" />
+                <input
+                  id={`${idPrefix}-linux-link`}
+                  type="url"
+                  value={formValues.linuxLink || ""}
+                  onChange={(e) => onChange("linuxLink", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaSteam className="text-white" aria-hidden="true" />
+                <input
+                  id={`${idPrefix}-steam-link`}
+                  type="url"
+                  value={formValues.steamLink || ""}
+                  onChange={(e) => onChange("steamLink", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -314,6 +392,12 @@ GenericEntryForm.propTypes = {
     gameType: PropTypes.string,
     textColor: PropTypes.string,
     borderColor: PropTypes.string,
+    macLink: PropTypes.string,
+    iosLink: PropTypes.string,
+    androidLink: PropTypes.string,
+    windowsLink: PropTypes.string,
+    linuxLink: PropTypes.string,
+    steamLink: PropTypes.string,
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,

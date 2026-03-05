@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router";
 import useImages from "../hooks/useImages";
 
 const GAME_GROUPS = [
@@ -6,6 +7,13 @@ const GAME_GROUPS = [
   { key: "pc games", title: "PC Games" },
   { key: "hacks", title: "Hacks" },
 ];
+
+const slugify = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .trim()
+    .replaceAll(/\s+/g, "-")
+    .replaceAll(/[^a-z0-9-]/g, "");
 
 const Games = () => {
   const { data: games, loading, error } = useImages("games");
@@ -26,7 +34,7 @@ const Games = () => {
         return (
           <section key={group.key} className="mb-10">
             <h2 className="text-xl font-semibold mb-4">{group.title}</h2>
-            <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <ul className="flex flex-wrap gap-6 justify-center">
               {groupGames.map((game) => {
                 const content = (
                   <>
@@ -34,7 +42,7 @@ const Games = () => {
                       <img
                         src={game.src}
                         alt={game.name || "game"}
-                        className="w-full h-auto rounded border-2"
+                        className="w-full h-auto border-2"
                         style={game.borderColor ? { borderColor: game.borderColor } : undefined}
                       />
                     )}
@@ -48,19 +56,13 @@ const Games = () => {
                 );
 
                 return (
-                  <li key={game.id} className="rounded">
-                    {game.url ? (
-                      <a
-                        href={game.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block"
-                      >
-                        {content}
-                      </a>
-                    ) : (
-                      <div className="block">{content}</div>
-                    )}
+                  <li key={game.id} className="w-full max-w-[220px]">
+                    <Link
+                      to={`/games/${encodeURIComponent(slugify(game.name))}`}
+                      className="block"
+                    >
+                      {content}
+                    </Link>
                   </li>
                 );
               })}

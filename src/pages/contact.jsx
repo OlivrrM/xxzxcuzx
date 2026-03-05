@@ -2,55 +2,63 @@
 
 const Contact = () => {
     return (
-        <div className="p-4 max-w-2xl mx-auto">
+        <div className="p-4 w-full">
             <h1 className="text-2xl font-bold mb-6">Contact</h1>
 
             <form
                 action="https://formspree.io/f/xreyzdoz"
                 method="POST"
-                className="space-y-4"
+                className="space-y-4 w-full"
             >
                 <div>
-                    <label htmlFor="contact-name" className="block text-sm font-medium mb-1">
+                    <label htmlFor="contact-name" className="block text-start text-sm font-medium mb-1 text-white">
                         Name
                     </label>
                     <input
                         id="contact-name"
                         name="name"
                         type="text"
+                        placeholder="Your name"
                         required
                         className="app-input w-full"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="contact-email" className="block text-sm font-medium mb-1">
+                    <label htmlFor="contact-email" className="block text-start text-sm font-medium mb-1 text-white">
                         Email
                     </label>
                     <input
                         id="contact-email"
                         name="email"
                         type="email"
+                        placeholder="you@example.com"
                         required
                         className="app-input w-full"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="contact-message" className="block text-sm font-medium mb-1">
+                    <label htmlFor="contact-message" className="block text-start text-sm font-medium mb-1 text-white">
                         Message
                     </label>
                     <textarea
                         id="contact-message"
                         name="message"
+                        placeholder="Write your message..."
                         required
                         className="app-input w-full min-h-40"
                     />
                 </div>
 
-                <button type="submit" className="app-btn app-btn-primary">
-                    Send
-                </button>
+                <div className="flex gap-2 w-full justify-end">
+                    <button type="reset" className="app-btn app-btn-secondary w-fit">
+                        Clear
+                    </button>
+                    <button type="submit" className="app-btn app-btn-primary w-fit">
+                        Send
+                    </button>
+                </div>
             </form>
         </div>
     );

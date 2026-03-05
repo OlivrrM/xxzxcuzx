@@ -88,6 +88,12 @@ const Dashboard = () => {
     gameType: "",
     textColor: "",
     borderColor: "",
+    macLink: "",
+    iosLink: "",
+    androidLink: "",
+    windowsLink: "",
+    linuxLink: "",
+    steamLink: "",
     url: "",
     description: "",
   });
@@ -373,6 +379,12 @@ const Dashboard = () => {
       gameType: "",
       textColor: "",
       borderColor: "",
+      macLink: "",
+      iosLink: "",
+      androidLink: "",
+      windowsLink: "",
+      linuxLink: "",
+      steamLink: "",
       url: "",
       description: "",
     });
@@ -405,9 +417,32 @@ const Dashboard = () => {
       gameType: "",
       textColor: "",
       borderColor: "",
+      macLink: "",
+      iosLink: "",
+      androidLink: "",
+      windowsLink: "",
+      linuxLink: "",
+      steamLink: "",
       url: "",
       description: "",
     }));
+  };
+
+  const getGamesPlatformLinksPayload = (form) => {
+    const linkFields = [
+      "macLink",
+      "iosLink",
+      "androidLink",
+      "windowsLink",
+      "linuxLink",
+      "steamLink",
+    ];
+
+    return linkFields.reduce((acc, field) => {
+      const value = form[field]?.trim();
+      if (value) acc[field] = value;
+      return acc;
+    }, {});
   };
 
   const clearSimpleFormFields = (setter) => {
@@ -779,6 +814,7 @@ const Dashboard = () => {
         if (gamesForm.borderColor) updates.borderColor = gamesForm.borderColor;
         if (gamesForm.description) updates.description = gamesForm.description;
         if (gamesForm.url) updates.url = gamesForm.url;
+        Object.assign(updates, getGamesPlatformLinksPayload(gamesForm));
 
         if (gamesForm.file) {
           setSectionStatus("games", "Uploading replacement image...");
@@ -817,6 +853,7 @@ const Dashboard = () => {
               borderColor: gamesForm.borderColor,
               src,
               path,
+              ...getGamesPlatformLinksPayload(gamesForm),
             });
           }
           return;
@@ -837,6 +874,7 @@ const Dashboard = () => {
           path,
           description: gamesForm.description,
           url: gamesForm.url,
+          ...getGamesPlatformLinksPayload(gamesForm),
         });
       };
 
@@ -942,6 +980,12 @@ const Dashboard = () => {
     !gamesForm.gameType &&
     !gamesForm.textColor &&
     !gamesForm.borderColor &&
+    !gamesForm.macLink &&
+    !gamesForm.iosLink &&
+    !gamesForm.androidLink &&
+    !gamesForm.windowsLink &&
+    !gamesForm.linuxLink &&
+    !gamesForm.steamLink &&
     !gamesForm.url &&
     !gamesForm.description;
 
@@ -989,6 +1033,12 @@ const Dashboard = () => {
         gamesForm.gameType === gamesEditSnapshot.gameType &&
         gamesForm.textColor === gamesEditSnapshot.textColor &&
         gamesForm.borderColor === gamesEditSnapshot.borderColor &&
+        gamesForm.macLink === gamesEditSnapshot.macLink &&
+        gamesForm.iosLink === gamesEditSnapshot.iosLink &&
+        gamesForm.androidLink === gamesEditSnapshot.androidLink &&
+        gamesForm.windowsLink === gamesEditSnapshot.windowsLink &&
+        gamesForm.linuxLink === gamesEditSnapshot.linuxLink &&
+        gamesForm.steamLink === gamesEditSnapshot.steamLink &&
         gamesForm.url === gamesEditSnapshot.url &&
         gamesForm.description === gamesEditSnapshot.description &&
         !gamesForm.file &&
@@ -1040,6 +1090,12 @@ const Dashboard = () => {
       gamesForm.gameType === gamesEditSnapshot.gameType &&
       gamesForm.textColor === gamesEditSnapshot.textColor &&
       gamesForm.borderColor === gamesEditSnapshot.borderColor &&
+      gamesForm.macLink === gamesEditSnapshot.macLink &&
+      gamesForm.iosLink === gamesEditSnapshot.iosLink &&
+      gamesForm.androidLink === gamesEditSnapshot.androidLink &&
+      gamesForm.windowsLink === gamesEditSnapshot.windowsLink &&
+      gamesForm.linuxLink === gamesEditSnapshot.linuxLink &&
+      gamesForm.steamLink === gamesEditSnapshot.steamLink &&
       gamesForm.url === gamesEditSnapshot.url &&
       gamesForm.description === gamesEditSnapshot.description &&
       !gamesForm.file &&
@@ -1522,6 +1578,12 @@ const Dashboard = () => {
                     gameType: item.gameType || "",
                     textColor: item.textColor || "",
                     borderColor: item.borderColor || "",
+                    macLink: item.macLink || "",
+                    iosLink: item.iosLink || "",
+                    androidLink: item.androidLink || "",
+                    windowsLink: item.windowsLink || "",
+                    linuxLink: item.linuxLink || "",
+                    steamLink: item.steamLink || "",
                     url: item.url || "",
                     description: item.description || "",
                   };

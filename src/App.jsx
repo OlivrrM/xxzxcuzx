@@ -5,6 +5,7 @@ import Footer from "./components/layout/footer/footer";
 
 import Home from "./pages/home";
 import Games from "./pages/games";
+import GameDetail from "./pages/gameDetail";
 import Photography from "./pages/photography";
 import Photo from "./pages/photo/photo";
 import Contact from "./pages/contact";
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/games" element={<Games />} />
+          <Route path="/games/:gameName" element={<GameDetail />} />
           <Route path="/photography" element={<Photography />} />
           <Route path="/photography/:index" element={<Photo />} />
           <Route path="/contact" element={<Contact />} />

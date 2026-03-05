@@ -23,4 +23,10 @@ export const gamesSchema = softwareSchema.extend({
   gameType: z.enum(["web games", "pc games", "hacks"]),
   textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   borderColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  macLink: z.string().url().optional(),
+  iosLink: z.string().url().optional(),
+  androidLink: z.string().url().optional(),
+  windowsLink: z.string().url().optional(),
+  linuxLink: z.string().url().optional(),
+  steamLink: z.string().url().optional(),
 });
