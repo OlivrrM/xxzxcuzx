@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { FaApple, FaAndroid, FaWindows, FaLinux, FaSteam, FaMobileAlt } from "react-icons/fa";
+import romIcon from "../../assets/rom.jpg";
 
 const GenericEntryForm = ({
   section,
@@ -175,6 +176,25 @@ const GenericEntryForm = ({
             </div>
           )}
 
+          {formValues.gameType === "hacks" && (
+            <div>
+              <label
+                htmlFor={`${idPrefix}-hack-patch-link`}
+                className="block text-start text-sm font-medium mb-1"
+              >
+                Hack patch URL (optional)
+              </label>
+              <input
+                id={`${idPrefix}-hack-patch-link`}
+                type="url"
+                value={formValues.hackPatchLink || ""}
+                onChange={(e) => onChange("hackPatchLink", e.target.value)}
+                className="app-input w-full"
+                placeholder="https://..."
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label
@@ -303,6 +323,18 @@ const GenericEntryForm = ({
                   type="url"
                   value={formValues.steamLink || ""}
                   onChange={(e) => onChange("steamLink", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <img src={romIcon} alt="Romhacking" className="w-4 h-4 object-cover" />
+                <input
+                  id={`${idPrefix}-romhacking-link`}
+                  type="url"
+                  value={formValues.romhackingLink || ""}
+                  onChange={(e) => onChange("romhackingLink", e.target.value)}
                   className="app-input flex-1"
                   placeholder="https://..."
                 />
@@ -580,6 +612,7 @@ GenericEntryForm.propTypes = {
     windowsLink: PropTypes.string,
     linuxLink: PropTypes.string,
     steamLink: PropTypes.string,
+    romhackingLink: PropTypes.string,
     releasedStatus: PropTypes.string,
     updated: PropTypes.string,
     published: PropTypes.string,
@@ -594,6 +627,7 @@ GenericEntryForm.propTypes = {
     detailFiles: PropTypes.arrayOf(PropTypes.any),
     detailImages: PropTypes.arrayOf(PropTypes.string),
     detailImagePaths: PropTypes.arrayOf(PropTypes.string),
+    hackPatchLink: PropTypes.string,
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,

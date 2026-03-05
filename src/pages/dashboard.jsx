@@ -94,6 +94,7 @@ const Dashboard = () => {
     windowsLink: "",
     linuxLink: "",
     steamLink: "",
+    romhackingLink: "",
     releasedStatus: "",
     updated: "",
     published: "",
@@ -103,6 +104,7 @@ const Dashboard = () => {
     detailFiles: [],
     detailImages: [],
     detailImagePaths: [],
+    hackPatchLink: "",
     url: "",
     description: "",
   });
@@ -394,6 +396,7 @@ const Dashboard = () => {
       windowsLink: "",
       linuxLink: "",
       steamLink: "",
+      romhackingLink: "",
       releasedStatus: "",
       updated: "",
       published: "",
@@ -403,6 +406,7 @@ const Dashboard = () => {
       detailFiles: [],
       detailImages: [],
       detailImagePaths: [],
+      hackPatchLink: "",
       url: "",
       description: "",
     });
@@ -441,6 +445,7 @@ const Dashboard = () => {
       windowsLink: "",
       linuxLink: "",
       steamLink: "",
+      romhackingLink: "",
       releasedStatus: "",
       updated: "",
       published: "",
@@ -450,6 +455,7 @@ const Dashboard = () => {
       detailFiles: [],
       detailImages: [],
       detailImagePaths: [],
+      hackPatchLink: "",
       url: "",
       description: "",
     }));
@@ -500,6 +506,7 @@ const Dashboard = () => {
       "windowsLink",
       "linuxLink",
       "steamLink",
+      "romhackingLink",
     ];
 
     return linkFields.reduce((acc, field) => {
@@ -521,6 +528,12 @@ const Dashboard = () => {
     if (form.published) payload.published = form.published;
     const credits = normalizeCredits(form.credits);
     if (credits.length > 0) payload.credits = credits;
+
+    const hackPatchLink = form.hackPatchLink?.trim();
+    if (form.gameType === "hacks" && hackPatchLink) {
+      payload.hackPatchLink = hackPatchLink;
+    }
+
     return payload;
   };
 
@@ -1117,6 +1130,7 @@ const Dashboard = () => {
     !gamesForm.windowsLink &&
     !gamesForm.linuxLink &&
     !gamesForm.steamLink &&
+    !gamesForm.romhackingLink &&
     !gamesForm.releasedStatus &&
     !gamesForm.updated &&
     !gamesForm.published &&
@@ -1124,6 +1138,7 @@ const Dashboard = () => {
     !gamesForm.creditName &&
     !gamesForm.creditRole &&
     gamesForm.detailFiles.length === 0 &&
+    !gamesForm.hackPatchLink &&
     !gamesForm.url &&
     !gamesForm.description;
 
@@ -1177,6 +1192,7 @@ const Dashboard = () => {
         gamesForm.windowsLink === gamesEditSnapshot.windowsLink &&
         gamesForm.linuxLink === gamesEditSnapshot.linuxLink &&
         gamesForm.steamLink === gamesEditSnapshot.steamLink &&
+        gamesForm.romhackingLink === gamesEditSnapshot.romhackingLink &&
         gamesForm.releasedStatus === gamesEditSnapshot.releasedStatus &&
         gamesForm.updated === gamesEditSnapshot.updated &&
         gamesForm.published === gamesEditSnapshot.published &&
@@ -1184,6 +1200,7 @@ const Dashboard = () => {
         !gamesForm.creditName &&
         !gamesForm.creditRole &&
         gamesForm.detailFiles.length === 0 &&
+        gamesForm.hackPatchLink === gamesEditSnapshot.hackPatchLink &&
         gamesForm.url === gamesEditSnapshot.url &&
         gamesForm.description === gamesEditSnapshot.description &&
         !gamesForm.file &&
@@ -1241,6 +1258,7 @@ const Dashboard = () => {
       gamesForm.windowsLink === gamesEditSnapshot.windowsLink &&
       gamesForm.linuxLink === gamesEditSnapshot.linuxLink &&
       gamesForm.steamLink === gamesEditSnapshot.steamLink &&
+      gamesForm.romhackingLink === gamesEditSnapshot.romhackingLink &&
       gamesForm.releasedStatus === gamesEditSnapshot.releasedStatus &&
       gamesForm.updated === gamesEditSnapshot.updated &&
       gamesForm.published === gamesEditSnapshot.published &&
@@ -1248,6 +1266,7 @@ const Dashboard = () => {
       !gamesForm.creditName &&
       !gamesForm.creditRole &&
       gamesForm.detailFiles.length === 0 &&
+      gamesForm.hackPatchLink === gamesEditSnapshot.hackPatchLink &&
       gamesForm.url === gamesEditSnapshot.url &&
       gamesForm.description === gamesEditSnapshot.description &&
       !gamesForm.file &&
@@ -1752,6 +1771,7 @@ const Dashboard = () => {
                     windowsLink: item.windowsLink || "",
                     linuxLink: item.linuxLink || "",
                     steamLink: item.steamLink || "",
+                    romhackingLink: item.romhackingLink || "",
                     releasedStatus: item.releasedStatus || "",
                     updated: item.updated || "",
                     published: item.published || "",
@@ -1763,6 +1783,7 @@ const Dashboard = () => {
                     detailImagePaths: Array.isArray(item.detailImagePaths)
                       ? item.detailImagePaths
                       : [],
+                    hackPatchLink: item.hackPatchLink || "",
                     url: item.url || "",
                     description: item.description || "",
                   };

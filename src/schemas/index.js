@@ -23,6 +23,7 @@ export const gamesSchema = softwareSchema.extend({
   url: z.string().optional(),
   detailImages: z.array(z.string().url()).optional(),
   detailImagePaths: z.array(z.string()).optional(),
+  hackPatchLink: z.string().url().optional(),
   gameType: z.enum(["web games", "pc games", "hacks"]),
   releasedStatus: z.enum(["released", "in development", "on hold", "cancelled", "prototype"]).optional(),
   updated: z.string().optional(),
@@ -41,4 +42,5 @@ export const gamesSchema = softwareSchema.extend({
   windowsLink: z.string().url().optional(),
   linuxLink: z.string().url().optional(),
   steamLink: z.string().url().optional(),
+  romhackingLink: z.string().url().optional(),
 });

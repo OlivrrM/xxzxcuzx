@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useParams } from "react-router";
 import { FaApple, FaAndroid, FaWindows, FaLinux, FaSteam, FaMobileAlt } from "react-icons/fa";
 import useImages from "../hooks/useImages";
+import romIcon from "../assets/rom.jpg";
 
 const slugify = (value) =>
   String(value || "")
@@ -85,6 +86,7 @@ const GameDetail = () => {
     { key: "windowsLink", icon: FaWindows, label: "Windows" },
     { key: "linuxLink", icon: FaLinux, label: "Linux" },
     { key: "steamLink", icon: FaSteam, label: "Steam" },
+    { key: "romhackingLink", imageSrc: romIcon, label: "Romhacking" },
   ].filter((item) => Boolean(game[item.key]));
 
   const formatStatus = (value) => {
@@ -115,6 +117,8 @@ const GameDetail = () => {
   const rawEmbed = String(game.url || "").trim();
   const hasIframeMarkup = /^<iframe\b/i.test(rawEmbed);
   const canRenderEmbed = game.gameType === "web games" && hasIframeMarkup;
+  const hackPatchLink = String(game.hackPatchLink || "").trim();
+  const showPatchNow = game.gameType === "hacks" && Boolean(hackPatchLink);
   const showDetailImageGrid = game.gameType === "pc games" || game.gameType === "hacks";
   const detailImages = Array.isArray(game.detailImages) ? game.detailImages : [];
   const embed = parseGameEmbed(game.url);
@@ -177,7 +181,7 @@ const GameDetail = () => {
           <h2 className="text-lg font-semibold mb-2 text-white">Download Links</h2>
           {platformLinks.length > 0 ? (
             <div className="flex items-center justify-center gap-5 mt-2">
-              {platformLinks.map(({ key, icon: Icon, label }) => (
+              {platformLinks.map(({ key, icon: Icon, imageSrc, label }) => (
                 <a
                   key={key}
                   href={game[key]}
@@ -187,7 +191,7 @@ const GameDetail = () => {
                   title={label}
                   className="text-white text-2xl"
                 >
-                  <Icon />
+                  {Icon ? <Icon /> : <img src={imageSrc} alt={label} className="w-7 h-7 object-cover" />}
                 </a>
               ))}
             </div>
@@ -245,6 +249,17 @@ const GameDetail = () => {
               </div>
             )}
           </div>
+        )}
+
+        {showPatchNow && (
+          <a
+            href={hackPatchLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="app-btn app-btn-primary"
+          >
+            Patch Now
+          </a>
         )}
       </div>
     </div>
