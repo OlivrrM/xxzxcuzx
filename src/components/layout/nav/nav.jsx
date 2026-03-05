@@ -32,30 +32,49 @@ const Nav = () => {
         </div>
       )}
 
-      <div className="flex items-end justify-center gap-8">
-        <Link to="/software">
-          <p className={style}>Software</p>
-        </Link>
-        <Link to="/games">
-          <p className={style}>Games</p>
-        </Link>
+      <div className="flex flex-col items-center gap-4 min-[1201px]:flex-row min-[1201px]:items-end min-[1201px]:justify-center min-[1201px]:gap-8">
+        <div className="flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:hidden">
+          <Link to="/software">
+            <p className={style}>Software</p>
+          </Link>
+          <Link to="/games">
+            <p className={style}>Games</p>
+          </Link>
+          <Link to="/photography">
+            <p className={style}>Photography</p>
+          </Link>
+          <Link to="/contact">
+            <p className={style}>Contact</p>
+          </Link>
+        </div>
+
+        <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:order-1">
+          <Link to="/software">
+            <p className={style}>Software</p>
+          </Link>
+          <Link to="/games">
+            <p className={style}>Games</p>
+          </Link>
+        </div>
 
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="flex items-end relative h-[80px] bg-transparent p-0 shadow-none"
+          className="flex items-end relative h-[80px] bg-transparent p-0 shadow-none order-1 min-[1201px]:order-2"
           aria-label="Go to home"
         >
           <img src={coolTitle} alt="XXZCUZX" className="h-full" />
           <img src={com} alt=".com" className="h-[50%] mb-1" />
         </button>
 
-        <Link to="/photography">
-          <p className={style}>Photography</p>
-        </Link>
-        <Link to="/contact">
-          <p className={style}>Contact</p>
-        </Link>
+        <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-3 min-[1201px]:order-3">
+          <Link to="/photography">
+            <p className={style}>Photography</p>
+          </Link>
+          <Link to="/contact">
+            <p className={style}>Contact</p>
+          </Link>
+        </div>
       </div>
     </nav>
   );

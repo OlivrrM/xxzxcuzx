@@ -984,7 +984,7 @@ const Dashboard = () => {
       placeHolderForm.dateCreated === placeHolderEditSnapshot.dateCreated);
 
   return (
-    <div className="px-4 py-8 max-w-7xl mx-auto text-white">
+    <div className="px-4 py-8 text-white">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
         <h1 className="text-4xl text-center w-full font-bold underline text-white">Dashboard</h1>
       </div>
@@ -1047,12 +1047,12 @@ const Dashboard = () => {
                 />
               </div>
               {photoUploadMode === "multiple" && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => applyPhotoBulkDateSource("created")}
                     disabled={photoBulkDateSource === "created"}
-                    className="app-btn app-btn-secondary h-10"
+                    className="app-btn app-btn-secondary h-10 flex-1 sm:flex-none"
                   >
                     Created
                   </button>
@@ -1060,7 +1060,7 @@ const Dashboard = () => {
                     type="button"
                     onClick={() => applyPhotoBulkDateSource("modified")}
                     disabled={photoBulkDateSource === "modified"}
-                    className="app-btn app-btn-secondary h-10"
+                    className="app-btn app-btn-secondary h-10 flex-1 sm:flex-none"
                   >
                     Modified
                   </button>
@@ -1105,7 +1105,7 @@ const Dashboard = () => {
                       type="button"
                       onClick={() => setDateFromExif("created")}
                       className="app-btn app-btn-secondary"
-                      disabled={photoDateSource === "created"}
+                      disabled={!photoForm.file && photoForm.massFiles.length === 0}
                     >
                       Use created
                     </button>
@@ -1113,7 +1113,7 @@ const Dashboard = () => {
                       type="button"
                       onClick={() => setDateFromExif("modified")}
                       className="app-btn app-btn-secondary"
-                      disabled={photoDateSource === "modified"}
+                      disabled={!photoForm.file && photoForm.massFiles.length === 0}
                     >
                       Use modified
                     </button>

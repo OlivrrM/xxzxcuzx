@@ -14,10 +14,10 @@ import Dashboard from "./pages/dashboard";
 
 function App() {
   return (
-    <div className="page-container flex flex-col min-h-screen">
+    <div className="page-container flex flex-col min-h-screen items-center">
       <Nav />
 
-      <div className="page-content flex flex-col flex-1">
+      <div className="page-content max-w-[1200px] w-full flex flex-col flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/games" element={<Games />} />
