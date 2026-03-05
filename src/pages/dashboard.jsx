@@ -1122,6 +1122,20 @@ const Dashboard = () => {
       placeHolderForm.description === placeHolderEditSnapshot.description &&
       placeHolderForm.dateCreated === placeHolderEditSnapshot.dateCreated);
 
+  const dashboardLoading =
+    photographyLoading || softwareLoading || gamesLoading || placeHolderLoading;
+
+  if (dashboardLoading) {
+    return (
+      <div className="px-4 py-8 text-white flex flex-col flex-1 w-full">
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <AiOutlineLoading3Quarters className="w-12 h-12 animate-spin text-white" />
+          <p className="text-white">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-8 text-white">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
