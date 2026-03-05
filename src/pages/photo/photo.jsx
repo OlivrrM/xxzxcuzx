@@ -30,9 +30,15 @@ const Photo = () => {
     };
 
     scrollToBottom();
-    const timer = setTimeout(scrollToBottom, 0);
+    const rafId = requestAnimationFrame(scrollToBottom);
+    const timerShort = setTimeout(scrollToBottom, 120);
+    const timerLong = setTimeout(scrollToBottom, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerShort);
+      clearTimeout(timerLong);
+    };
   }, [image?.id, image?.src, idx]);
 
   if (loading) {
