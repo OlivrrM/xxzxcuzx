@@ -2,6 +2,7 @@ import coolTitle from "../../../assets/title.gif";
 import com from "../../../assets/xxzxcuzx_dot_com.png";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../../contexts/AuthContext";
+import skull from "../../../assets/skull.gif";
 
 const Nav = () => {
   const { user, logout } = useAuth();
@@ -49,12 +50,26 @@ const Nav = () => {
         </div>
 
         <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:order-1">
-          <Link to="/software">
-            <p className={style}>Software</p>
-          </Link>
-          <Link to="/games">
-            <p className={style}>Games</p>
-          </Link>
+          <div className="relative group">
+            <img
+              src={skull}
+              alt="Software preview"
+              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+            />
+            <Link to="/software">
+              <p className={style}>Software</p>
+            </Link>
+          </div>
+          <div className="relative group">
+            <img
+              src={skull}
+              alt="Games preview"
+              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+            />
+            <Link to="/games">
+              <p className={style}>Games</p>
+            </Link>
+          </div>
         </div>
 
         <button
@@ -68,12 +83,26 @@ const Nav = () => {
         </button>
 
         <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-3 min-[1201px]:order-3">
-          <Link to="/photography">
-            <p className={style}>Photography</p>
-          </Link>
-          <Link to="/contact">
-            <p className={style}>Contact</p>
-          </Link>
+          <div className="relative group">
+            <img
+              src={skull}
+              alt="Photography preview"
+              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+            />
+            <Link to="/photography">
+              <p className={style}>Photography</p>
+            </Link>
+          </div>
+          <div className="relative group">
+            <img
+              src={skull}
+              alt="Contact preview"
+              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+            />
+            <Link to="/contact">
+              <p className={style}>Contact</p>
+            </Link>
+          </div>
         </div>
       </div>
     </nav>
