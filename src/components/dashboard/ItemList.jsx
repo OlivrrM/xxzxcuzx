@@ -20,7 +20,7 @@ const ItemList = ({ section, items, loading, onEdit, onDelete }) => {
     return (
       <div>
         <h3 className="text-xl text-start font-semibold mb-3">{listTitle}</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
           {safeItems.map((item) => (
             <div key={item.id || item.path} className="relative group">
               <img

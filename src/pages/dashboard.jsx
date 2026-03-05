@@ -85,10 +85,14 @@ const Dashboard = () => {
     massFiles: [],
     editItem: null,
     name: "",
+    gameType: "",
+    textColor: "",
+    borderColor: "",
     url: "",
     description: "",
-    dateCreated: "",
   });
+
+  const isValidHexColor = (value) => /^#[0-9A-Fa-f]{6}$/.test(value || "");
 
   const [placeHolderForm, setPlaceHolderForm] = useState({
     editItem: null,
@@ -366,9 +370,11 @@ const Dashboard = () => {
       massFiles: [],
       editItem: null,
       name: "",
+      gameType: "",
+      textColor: "",
+      borderColor: "",
       url: "",
       description: "",
-      dateCreated: "",
     });
     setGamesEditSnapshot(null);
   };
@@ -396,9 +402,11 @@ const Dashboard = () => {
       file: null,
       massFiles: [],
       name: "",
+      gameType: "",
+      textColor: "",
+      borderColor: "",
       url: "",
       description: "",
-      dateCreated: "",
     }));
   };
 
@@ -602,7 +610,6 @@ const Dashboard = () => {
         ...prev,
         file: null,
         massFiles: files,
-        name: "",
       }));
       return;
     }
@@ -612,29 +619,7 @@ const Dashboard = () => {
       ...prev,
       file: singleFile,
       massFiles: [],
-      name: singleFile.name,
     }));
-
-    try {
-      const createdDate = getReliableFileDate(singleFile);
-      if (!createdDate) return;
-      setGamesForm((prev) => ({ ...prev, dateCreated: createdDate }));
-    } catch (error) {
-      console.warn("Failed to read EXIF metadata", error);
-    }
-  };
-
-  const setGamesDateFromExif = async (kind) => {
-    const currentFile = gamesForm.file || gamesForm.massFiles[0];
-    if (!currentFile) return;
-
-    const sourceDate = getReliableFileDate(currentFile);
-    if (sourceDate) {
-      setGamesForm((prev) => ({
-        ...prev,
-        dateCreated: sourceDate,
-      }));
-    }
   };
 
   const handlePhotographySubmit = async (e) => {
@@ -789,9 +774,28 @@ const Dashboard = () => {
       const runGamesEdit = async () => {
         throwIfCancelled("games");
         const updates = { name: gamesForm.name };
+        if (gamesForm.gameType) updates.gameType = gamesForm.gameType;
+        if (gamesForm.textColor) updates.textColor = gamesForm.textColor;
+        if (gamesForm.borderColor) updates.borderColor = gamesForm.borderColor;
         if (gamesForm.description) updates.description = gamesForm.description;
-        if (gamesForm.dateCreated) updates.dateCreated = gamesForm.dateCreated;
         if (gamesForm.url) updates.url = gamesForm.url;
+
+        if (gamesForm.file) {
+          setSectionStatus("games", "Uploading replacement image...");
+          const replacementPath = `games/${Date.now()}_${gamesForm.file.name}`;
+          const replacementSrc = await uploadFileToGitHub(gamesForm.file, replacementPath);
+          throwIfCancelled("games");
+          updates.path = replacementPath;
+          updates.src = replacementSrc;
+
+          if (gamesForm.editItem?.path) {
+            try {
+              await deleteFileFromGitHub(gamesForm.editItem.path);
+            } catch (error) {
+              console.warn("Failed to delete old games image from GitHub", error);
+            }
+          }
+        }
 
         await updateDoc(doc(db, "games", gamesForm.editItem.id), updates);
         reloadGames();
@@ -808,9 +812,11 @@ const Dashboard = () => {
             throwIfCancelled("games");
             await addItem("games", {
               name: file.name,
+              gameType: gamesForm.gameType,
+              textColor: gamesForm.textColor,
+              borderColor: gamesForm.borderColor,
               src,
               path,
-              dateCreated: gamesForm.dateCreated || "00-00-0000",
             });
           }
           return;
@@ -824,9 +830,11 @@ const Dashboard = () => {
         throwIfCancelled("games");
         await addItem("games", {
           name: gamesForm.name || gamesForm.file.name,
+          gameType: gamesForm.gameType,
+          textColor: gamesForm.textColor,
+          borderColor: gamesForm.borderColor,
           src,
           path,
-          dateCreated: gamesForm.dateCreated || "00-00-0000",
           description: gamesForm.description,
           url: gamesForm.url,
         });
@@ -931,9 +939,11 @@ const Dashboard = () => {
     !gamesForm.file &&
     gamesForm.massFiles.length === 0 &&
     !gamesForm.name &&
+    !gamesForm.gameType &&
+    !gamesForm.textColor &&
+    !gamesForm.borderColor &&
     !gamesForm.url &&
-    !gamesForm.description &&
-    !gamesForm.dateCreated;
+    !gamesForm.description;
 
   const softwareClearDisabled =
     !softwareForm.name &&
@@ -968,15 +978,28 @@ const Dashboard = () => {
   }
 
   const gamesSubmitDisabled = gamesForm.editItem
-    ? !gamesEditSnapshot || (
-      gamesForm.name === gamesEditSnapshot.name &&
-      gamesForm.url === gamesEditSnapshot.url &&
-      gamesForm.description === gamesEditSnapshot.description &&
-      gamesForm.dateCreated === gamesEditSnapshot.dateCreated &&
-      !gamesForm.file &&
-      gamesForm.massFiles.length === 0
-    )
-    : !gamesForm.file && gamesForm.massFiles.length === 0;
+    ?
+      !gamesForm.name?.trim() ||
+      !gamesForm.gameType ||
+      !isValidHexColor(gamesForm.textColor) ||
+      !isValidHexColor(gamesForm.borderColor) ||
+      !gamesEditSnapshot ||
+      (
+        gamesForm.name === gamesEditSnapshot.name &&
+        gamesForm.gameType === gamesEditSnapshot.gameType &&
+        gamesForm.textColor === gamesEditSnapshot.textColor &&
+        gamesForm.borderColor === gamesEditSnapshot.borderColor &&
+        gamesForm.url === gamesEditSnapshot.url &&
+        gamesForm.description === gamesEditSnapshot.description &&
+        !gamesForm.file &&
+        gamesForm.massFiles.length === 0
+      )
+    :
+      (!gamesForm.file && gamesForm.massFiles.length === 0) ||
+      !gamesForm.name?.trim() ||
+      !gamesForm.gameType ||
+      !isValidHexColor(gamesForm.textColor) ||
+      !isValidHexColor(gamesForm.borderColor);
 
   const softwareSubmitDisabled = softwareForm.editItem
     ? !softwareForm.name?.trim() ||
@@ -1014,9 +1037,11 @@ const Dashboard = () => {
     !gamesForm.editItem ||
     !gamesEditSnapshot ||
     (gamesForm.name === gamesEditSnapshot.name &&
+      gamesForm.gameType === gamesEditSnapshot.gameType &&
+      gamesForm.textColor === gamesEditSnapshot.textColor &&
+      gamesForm.borderColor === gamesEditSnapshot.borderColor &&
       gamesForm.url === gamesEditSnapshot.url &&
       gamesForm.description === gamesEditSnapshot.description &&
-      gamesForm.dateCreated === gamesEditSnapshot.dateCreated &&
       !gamesForm.file &&
       gamesForm.massFiles.length === 0);
 
@@ -1480,8 +1505,6 @@ const Dashboard = () => {
               onRevert={revertGamesForm}
               onClear={clearGamesForm}
               onFileSelect={handleGamesFileSelect}
-              onUseCreatedDate={() => setGamesDateFromExif("created")}
-              onUseModifiedDate={() => setGamesDateFromExif("modified")}
               disableDescription={gamesForm.massFiles.length > 0}
               submitDisabled={gamesSubmitDisabled}
               clearDisabled={gamesClearDisabled}
@@ -1496,9 +1519,11 @@ const Dashboard = () => {
                 {
                   const snapshot = {
                     name: item.name || "",
+                    gameType: item.gameType || "",
+                    textColor: item.textColor || "",
+                    borderColor: item.borderColor || "",
                     url: item.url || "",
                     description: item.description || "",
-                    dateCreated: item.dateCreated || "",
                   };
                   setGamesEditSnapshot(snapshot);
                   setGamesForm({

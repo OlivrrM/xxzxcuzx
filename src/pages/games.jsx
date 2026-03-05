@@ -1,6 +1,12 @@
 import React from "react";
 import useImages from "../hooks/useImages";
 
+const GAME_GROUPS = [
+  { key: "web games", title: "Web Games" },
+  { key: "pc games", title: "PC Games" },
+  { key: "hacks", title: "Hacks" },
+];
+
 const Games = () => {
   const { data: games, loading, error } = useImages("games");
 
@@ -12,31 +18,56 @@ const Games = () => {
       {!loading && !error && games.length === 0 && (
         <p className="italic">No games entries yet.</p>
       )}
-      <ul className="space-y-4">
-        {games.map((game) => (
-          <li key={game.id} className="border p-3 rounded">
-            <h2 className="font-semibold">{game.name}</h2>
-            {game.src && (
-              <img
-                src={game.src}
-                alt={game.name || "game"}
-                className="mt-2 w-full max-w-md h-auto rounded"
-              />
-            )}
-            {game.description && <p>{game.description}</p>}
-            {game.url && (
-              <a
-                href={game.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 underline"
-              >
-                Play / Download
-              </a>
-            )}
-          </li>
-        ))}
-      </ul>
+
+      {!loading && !error && GAME_GROUPS.map((group) => {
+        const groupGames = games.filter((game) => game.gameType === group.key);
+        if (groupGames.length === 0) return null;
+
+        return (
+          <section key={group.key} className="mb-10">
+            <h2 className="text-xl font-semibold mb-4">{group.title}</h2>
+            <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {groupGames.map((game) => {
+                const content = (
+                  <>
+                    {game.src && (
+                      <img
+                        src={game.src}
+                        alt={game.name || "game"}
+                        className="w-full h-auto rounded border-2"
+                        style={game.borderColor ? { borderColor: game.borderColor } : undefined}
+                      />
+                    )}
+                    <p
+                      className="mt-2 text-center font-semibold"
+                      style={game.textColor ? { color: game.textColor } : undefined}
+                    >
+                      {game.name}
+                    </p>
+                  </>
+                );
+
+                return (
+                  <li key={game.id} className="rounded">
+                    {game.url ? (
+                      <a
+                        href={game.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div className="block">{content}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
     </div>
   );
 };

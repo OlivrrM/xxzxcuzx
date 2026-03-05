@@ -19,4 +19,8 @@ export const softwareSchema = z.object({
   dateCreated: z.string().optional(),
 });
 
-export const gamesSchema = softwareSchema;
+export const gamesSchema = softwareSchema.extend({
+  gameType: z.enum(["web games", "pc games", "hacks"]),
+  textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  borderColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+});

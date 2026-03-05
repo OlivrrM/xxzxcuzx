@@ -2,8 +2,10 @@ import { useEffect } from "react";
 import useImages from "../../hooks/useImages";
 import { useNavigate, useParams } from "react-router";
 import arrow from "../../assets/FreeVector-3D-Arrow-Vector-Graphics.png"
+import PixiImageGlow from "../../components/PixiImageGlow";
 
-const IMAGE_BORDER_BLUR_PX = 10;
+const IMAGE_BORDER_BLUR_PX = 0;
+const IMAGE_GLOW_STRENGTH = 0;
 
 const Photo = () => {
   const { index } = useParams();
@@ -73,25 +75,13 @@ const Photo = () => {
     <div className="p-4 max-w-5xl mx-auto flex flex-col items-center text-center">
       <h1 className="text-2xl font-bold mb-4 italic">{image.name}</h1>
 
-      <div className="relative w-full max-w-3xl overflow-hidden">
-        <img
-          src={image.src}
-          alt=""
-          aria-hidden="true"
-          className="w-full h-auto blur-md scale-[1.03]"
-        />
-        <div
-          className="absolute overflow-hidden"
-          style={{
-            top: IMAGE_BORDER_BLUR_PX,
-            right: IMAGE_BORDER_BLUR_PX,
-            bottom: IMAGE_BORDER_BLUR_PX,
-            left: IMAGE_BORDER_BLUR_PX,
-          }}
-        >
-          <img src={image.src} alt={image.name} className="w-full h-full object-contain" />
-        </div>
-      </div>
+      <PixiImageGlow
+        src={image.src}
+        alt={image.name}
+        borderPx={IMAGE_BORDER_BLUR_PX}
+        blurStrength={IMAGE_GLOW_STRENGTH}
+        className="w-full max-w-3xl"
+      />
 
       <div className="mt-6 w-full flex items-center justify-between gap-4">
         <button

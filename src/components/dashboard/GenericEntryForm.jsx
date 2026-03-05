@@ -22,7 +22,14 @@ const GenericEntryForm = ({
   statusClassName,
 }) => {
   const isPhotography = section === "photography";
+  const isGames = section === "games";
   const isMediaUploadSection = section === "photography" || section === "games";
+  const normalizedGameColor = /^#[0-9A-Fa-f]{6}$/.test(formValues.textColor || "")
+    ? formValues.textColor
+    : "#ff0000";
+  const normalizedBorderColor = /^#[0-9A-Fa-f]{6}$/.test(formValues.borderColor || "")
+    ? formValues.borderColor
+    : "#ffffff";
   const submitLabel = isEditing ? "Save" : "Upload";
   const idPrefix = `${section}-entry`;
 
@@ -42,8 +49,8 @@ const GenericEntryForm = ({
             accept="image/*"
             onChange={onFileSelect}
             className="app-input w-full block"
-            multiple
-            disabled={isEditing}
+            multiple={!isEditing}
+            disabled={isPhotography && isEditing}
           />
         </div>
       )}
@@ -53,7 +60,7 @@ const GenericEntryForm = ({
           htmlFor={`${idPrefix}-name`}
           className="block text-start text-sm font-medium mb-1"
         >
-          Name{isMediaUploadSection ? " (optional)" : ""}
+          Name{isPhotography ? " (optional)" : ""}
         </label>
         <input
           id={`${idPrefix}-name`}
@@ -61,6 +68,7 @@ const GenericEntryForm = ({
           value={formValues.name}
           onChange={(e) => onChange("name", e.target.value)}
           className="app-input w-full"
+          required={isGames}
         />
       </div>
 
@@ -82,43 +90,127 @@ const GenericEntryForm = ({
         </div>
       )}
 
-      <div>
-        <label
-          htmlFor={`${idPrefix}-date-created`}
-          className="block text-start text-sm font-medium mb-1"
-        >
-          Date created (optional)
-        </label>
-        <div className="flex gap-2">
-          <input
-            id={`${idPrefix}-date-created`}
-            type="date"
-            value={formValues.dateCreated}
-            onChange={(e) => onChange("dateCreated", e.target.value)}
-            className={`app-input ${isMediaUploadSection ? "flex-1" : "w-full"}`}
-          />
-          {isMediaUploadSection && (
-            <>
-              <button
-                type="button"
-                onClick={onUseCreatedDate}
-                className="app-btn app-btn-secondary"
-                disabled={isPhotography && activeDateSource === "created"}
+      {isGames && (
+        <div className="space-y-3">
+          <div>
+            <label
+              htmlFor={`${idPrefix}-game-type`}
+              className="block text-start text-sm font-medium mb-1"
+            >
+              Game type
+            </label>
+            <select
+              id={`${idPrefix}-game-type`}
+              value={formValues.gameType || ""}
+              onChange={(e) => onChange("gameType", e.target.value)}
+              className="app-input w-full"
+              required
+            >
+              <option value="">Select game type</option>
+              <option value="web games">Web games</option>
+              <option value="pc games">PC games</option>
+              <option value="hacks">Hacks</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor={`${idPrefix}-text-color`}
+                className="block text-start text-sm font-medium mb-1"
               >
-                Use created
-              </button>
-              <button
-                type="button"
-                onClick={onUseModifiedDate}
-                className="app-btn app-btn-secondary"
-                disabled={isPhotography && activeDateSource === "modified"}
+                Text color (hex)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id={`${idPrefix}-text-color`}
+                  type="text"
+                  value={formValues.textColor || ""}
+                  onChange={(e) => onChange("textColor", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="#ff0000"
+                  pattern="^#[0-9A-Fa-f]{6}$"
+                  required
+                />
+                <input
+                  type="color"
+                  value={normalizedGameColor}
+                  onChange={(e) => onChange("textColor", e.target.value)}
+                  className="app-input h-10 w-14 p-1 cursor-pointer"
+                  aria-label="Pick text color"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor={`${idPrefix}-border-color`}
+                className="block text-start text-sm font-medium mb-1"
               >
-                Use modified
-              </button>
-            </>
-          )}
+                Border color (hex)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id={`${idPrefix}-border-color`}
+                  type="text"
+                  value={formValues.borderColor || ""}
+                  onChange={(e) => onChange("borderColor", e.target.value)}
+                  className="app-input flex-1"
+                  placeholder="#ffffff"
+                  pattern="^#[0-9A-Fa-f]{6}$"
+                  required
+                />
+                <input
+                  type="color"
+                  value={normalizedBorderColor}
+                  onChange={(e) => onChange("borderColor", e.target.value)}
+                  className="app-input h-10 w-14 p-1 cursor-pointer"
+                  aria-label="Pick border color"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {!isGames && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-date-created`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Date created (optional)
+          </label>
+          <div className="flex gap-2">
+            <input
+              id={`${idPrefix}-date-created`}
+              type="date"
+              value={formValues.dateCreated}
+              onChange={(e) => onChange("dateCreated", e.target.value)}
+              className={`app-input ${isMediaUploadSection ? "flex-1" : "w-full"}`}
+            />
+            {isMediaUploadSection && (
+              <>
+                <button
+                  type="button"
+                  onClick={onUseCreatedDate}
+                  className="app-btn app-btn-secondary"
+                  disabled={isPhotography && activeDateSource === "created"}
+                >
+                  Use created
+                </button>
+                <button
+                  type="button"
+                  onClick={onUseModifiedDate}
+                  className="app-btn app-btn-secondary"
+                  disabled={isPhotography && activeDateSource === "modified"}
+                >
+                  Use modified
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {isPhotography && (
         <>
@@ -219,6 +311,9 @@ GenericEntryForm.propTypes = {
     dateCreated: PropTypes.string,
     cameraModel: PropTypes.string,
     location: PropTypes.string,
+    gameType: PropTypes.string,
+    textColor: PropTypes.string,
+    borderColor: PropTypes.string,
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,

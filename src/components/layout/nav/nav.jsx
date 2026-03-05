@@ -3,11 +3,15 @@ import com from "../../../assets/xxzxcuzx_dot_com.png";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import skull from "../../../assets/skull.gif";
+import coolFire from "../../../assets/fire.gif";
+import { useState } from "react";
 
 const Nav = () => {
   const { user, logout } = useAuth();
   const style = "text-[#ff0000] text-4xl font-bold";
   const navigate = useNavigate();
+  const [showFire, setShowFire] = useState(false);
+
 
   const handleLogout = async () => {
     await logout();
@@ -34,74 +38,83 @@ const Nav = () => {
       )}
 
       <div className="flex flex-col items-center gap-4 min-[1201px]:flex-row min-[1201px]:items-end min-[1201px]:justify-center min-[1201px]:gap-8">
-        <div className="flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:hidden">
-          <Link to="/software">
-            <p className={style}>Software</p>
-          </Link>
-          <Link to="/games">
-            <p className={style}>Games</p>
-          </Link>
-          <Link to="/photography">
-            <p className={style}>Photography</p>
-          </Link>
-          <Link to="/contact">
-            <p className={style}>Contact</p>
-          </Link>
-        </div>
 
-        <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:order-1">
-          <div className="relative group">
-            <img
-              src={skull}
-              alt="Software preview"
-              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
-            />
+        {showFire && (
+          <img src={coolFire} alt="fire" className="hidden min-[1201px]:flex h-full w-full absolute z-[-2] opacity-70" />        
+        )}
+        <div className="p-[10px] flex">
+          <div className="flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:hidden">
             <Link to="/software">
               <p className={style}>Software</p>
             </Link>
-          </div>
-          <div className="relative group">
-            <img
-              src={skull}
-              alt="Games preview"
-              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
-            />
             <Link to="/games">
               <p className={style}>Games</p>
             </Link>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="flex items-end relative h-[80px] bg-transparent p-0 shadow-none order-1 min-[1201px]:order-2"
-          aria-label="Go to home"
-        >
-          <img src={coolTitle} alt="XXZCUZX" className="h-full" />
-          <img src={com} alt=".com" className="h-[50%] mb-1" />
-        </button>
-
-        <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-3 min-[1201px]:order-3">
-          <div className="relative group">
-            <img
-              src={skull}
-              alt="Photography preview"
-              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
-            />
             <Link to="/photography">
               <p className={style}>Photography</p>
             </Link>
-          </div>
-          <div className="relative group">
-            <img
-              src={skull}
-              alt="Contact preview"
-              className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
-            />
             <Link to="/contact">
               <p className={style}>Contact</p>
             </Link>
+          </div>
+
+          <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:order-1">
+            <div className="relative group">
+              <img
+                src={skull}
+                alt="Software preview"
+                className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+              />
+              <Link to="/software">
+                <p className={style}>Software</p>
+              </Link>
+            </div>
+            <div className="relative group">
+              <img
+                src={skull}
+                alt="Games preview"
+                className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+              />
+              <Link to="/games">
+                <p className={style}>Games</p>
+              </Link>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-end relative h-[80px] bg-transparent p-0 shadow-none order-1 min-[1201px]:order-2 mr-4 ml-4"
+            aria-label="Go to home"
+            onMouseEnter={() => setShowFire(true)}
+            onMouseLeave={() => setShowFire(false)}
+          >
+            <img src={coolTitle} alt="XXZCUZX" className="h-full" />
+            <img src={com} alt=".com" className="h-[50%] mb-1" />
+          </button>
+
+          <div className="hidden relative min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-3 min-[1201px]:order-3">
+                      
+            <div className="relative group">
+              <img
+                src={skull}
+                alt="Photography preview"
+                className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+              />
+              <Link to="/photography">
+                <p className={style}>Photography</p>
+              </Link>
+            </div>
+            <div className="relative group">
+              <img
+                src={skull}
+                alt="Contact preview"
+                className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+              />
+              <Link to="/contact">
+                <p className={style}>Contact</p>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
