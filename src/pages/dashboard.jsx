@@ -141,6 +141,7 @@ const Dashboard = () => {
   const [photoUploadMode, setPhotoUploadMode] = useState("single");
   const [photoMassMeta, setPhotoMassMeta] = useState([]);
   const [photoBulkDateSource, setPhotoBulkDateSource] = useState("created");
+  const [photoTransferDate, setPhotoTransferDate] = useState("");
 
   const normalizeExifDate = (value) => {
     if (!value) return "";
@@ -217,18 +218,19 @@ const Dashboard = () => {
       "MediaCreateDate",
       "TrackCreateDate",
       "CreationDate",
-    ]) || normalizeExifDate(file?.lastModified);
+    ]) || "00-00-0000";
 
     const modifiedDate =
       getFirstExifDate(metadata, [
         "ModifyDate",
+        "DateTime",
         "DateModified",
         "SubSecModifyDate",
         "FileModifyDate",
         "MetadataDate",
         "MediaModifyDate",
         "TrackModifyDate",
-      ]) || normalizeExifDate(file?.lastModified);
+      ]) || getReliableFileDate(file);
 
     const cameraModel =
       getTagValue(metadata, "Model") ||
@@ -281,14 +283,19 @@ const Dashboard = () => {
         metadata,
       });
       const extracted = extractPhotoExifFields(metadata, file);
+      const resolvedCreated = extracted.createdDate || "00-00-0000";
+      const resolvedModified = extracted.modifiedDate || fallbackDate;
 
       return {
         ...base,
         cameraModel: extracted.cameraModel,
         location: extracted.location,
-        createdDate: fallbackDate,
-        modifiedDate: fallbackDate,
-        dateCreated: fallbackDate,
+        createdDate: resolvedCreated,
+        modifiedDate: resolvedModified,
+        dateCreated:
+          photoBulkDateSource === "modified"
+            ? resolvedModified || resolvedCreated || "00-00-0000"
+            : resolvedCreated || resolvedModified || "00-00-0000",
       };
     } catch {
       return base;
@@ -311,6 +318,7 @@ const Dashboard = () => {
     setPhotoUploadMode(mode);
     setPhotoDateSource("created");
     setPhotoBulkDateSource("created");
+    setPhotoTransferDate("");
     setPhotoForm((prev) => ({
       ...prev,
       file: null,
@@ -339,6 +347,7 @@ const Dashboard = () => {
     setPhotoDateSource("created");
     setPhotoBulkDateSource("created");
     setPhotoUploadMode("single");
+    setPhotoTransferDate("");
   };
 
   const resetSimpleForm = (setter) => {
@@ -378,6 +387,7 @@ const Dashboard = () => {
     }));
     setPhotoDateSource("created");
     setPhotoBulkDateSource("created");
+    setPhotoTransferDate("");
   };
 
   const clearGamesForm = () => {
@@ -414,6 +424,7 @@ const Dashboard = () => {
     setPhotoDateSource("created");
     setPhotoBulkDateSource("created");
     setPhotoUploadMode("single");
+    setPhotoTransferDate("");
   };
 
   const revertGamesForm = () => {
@@ -485,8 +496,11 @@ const Dashboard = () => {
 
       setPhotoForm((prev) => {
         const next = { ...prev };
-        const { cameraModel, location } = extracted;
-        next.dateCreated = getReliableFileDate(singleFile);
+        const { createdDate, modifiedDate, cameraModel, location } = extracted;
+        next.dateCreated =
+          photoDateSource === "modified"
+            ? modifiedDate || createdDate || "00-00-0000"
+            : createdDate || modifiedDate || "00-00-0000";
         if (cameraModel) {
           next.cameraModel = cameraModel;
         }
@@ -497,7 +511,10 @@ const Dashboard = () => {
       });
       console.log("[photo] applied autofill from upload", {
         preferredDateSource: photoDateSource,
-        appliedDate: getReliableFileDate(singleFile),
+        appliedDate:
+          photoDateSource === "modified"
+            ? extracted.modifiedDate || extracted.createdDate || "00-00-0000"
+            : extracted.createdDate || extracted.modifiedDate || "00-00-0000",
         cameraModel: extracted.cameraModel,
       });
     } catch (error) {
@@ -516,6 +533,9 @@ const Dashboard = () => {
 
     try {
       const metadata = await parseMetadataSafe(currentFile, "setDateFromExif");
+      
+      console.log("[photo] full metadata for setDateFromExif ", metadata);
+      
       const extracted = extractPhotoExifFields(metadata, currentFile);
       const sourceDate =
         kind === "created" ? extracted.createdDate : extracted.modifiedDate;
@@ -556,6 +576,18 @@ const Dashboard = () => {
             : entry.createdDate || entry.modifiedDate || entry.dateCreated || "00-00-0000",
       }))
     );
+  };
+
+  const transferPhotoBulkDate = () => {
+    if (!photoTransferDate) return;
+
+    setPhotoMassMeta((prev) =>
+      prev.map((entry) => ({
+        ...entry,
+        dateCreated: photoTransferDate,
+      }))
+    );
+    setPhotoTransferDate("");
   };
 
   const handleGamesFileSelect = async (e) => {
@@ -918,6 +950,7 @@ const Dashboard = () => {
   let photoSubmitDisabled;
   if (photoForm.editItem) {
     photoSubmitDisabled =
+      !photoForm.name?.trim() ||
       !photoEditSnapshot ||
       (photoForm.name === photoEditSnapshot.name &&
         photoForm.description === photoEditSnapshot.description &&
@@ -927,9 +960,11 @@ const Dashboard = () => {
         !photoForm.file &&
         photoForm.massFiles.length === 0);
   } else if (photoUploadMode === "single") {
-    photoSubmitDisabled = !photoForm.file;
+    photoSubmitDisabled = !photoForm.file || !photoForm.name?.trim();
   } else {
-    photoSubmitDisabled = photoForm.massFiles.length === 0;
+    photoSubmitDisabled =
+      photoForm.massFiles.length === 0 ||
+      photoMassMeta.some((entry) => !entry.name?.trim());
   }
 
   const gamesSubmitDisabled = gamesForm.editItem
@@ -1068,16 +1103,7 @@ const Dashboard = () => {
                 <div className="flex gap-2 w-full sm:w-auto">
                   <button
                     type="button"
-                    onClick={() => applyPhotoBulkDateSource("created")}
-                    disabled={photoBulkDateSource === "created"}
-                    className="app-btn app-btn-secondary h-10 flex-1 sm:flex-none"
-                  >
-                    Created
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => applyPhotoBulkDateSource("modified")}
-                    disabled={photoBulkDateSource === "modified"}
                     className="app-btn app-btn-secondary h-10 flex-1 sm:flex-none"
                   >
                     Modified
@@ -1090,7 +1116,7 @@ const Dashboard = () => {
               <>
                 <div>
                   <label className="block text-start text-sm font-medium mb-1" htmlFor="photo-name">
-                    Name (optional)
+                    Name
                   </label>
                   <input
                     id="photo-name"
@@ -1098,6 +1124,7 @@ const Dashboard = () => {
                     value={photoForm.name}
                     onChange={(e) => setPhotoForm((prev) => ({ ...prev, name: e.target.value }))}
                     className="app-input w-full"
+                    required
                   />
                 </div>
 
@@ -1121,23 +1148,9 @@ const Dashboard = () => {
                     />
                     <button
                       type="button"
-                      onClick={() => setDateFromExif("created")}
-                      className="app-btn app-btn-secondary"
-                      disabled={
-                        (!photoForm.file && photoForm.massFiles.length === 0) ||
-                        photoDateSource === "created"
-                      }
-                    >
-                      Use created
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => setDateFromExif("modified")}
                       className="app-btn app-btn-secondary"
-                      disabled={
-                        (!photoForm.file && photoForm.massFiles.length === 0) ||
-                        photoDateSource === "modified"
-                      }
+                      disabled={!photoForm.file && photoForm.massFiles.length === 0}
                     >
                       Use modified
                     </button>
@@ -1196,6 +1209,32 @@ const Dashboard = () => {
 
             {photoUploadMode === "multiple" && (
               <>
+                <div className="flex gap-2 items-end flex-wrap">
+                  <div className="flex-1 min-w-[220px]">
+                    <label
+                      className="block text-start text-sm font-medium mb-1"
+                      htmlFor="photo-transfer-date"
+                    >
+                      Bulk date
+                    </label>
+                    <input
+                      id="photo-transfer-date"
+                      type="date"
+                      value={photoTransferDate}
+                      onChange={(e) => setPhotoTransferDate(e.target.value)}
+                      className="app-input w-full"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={transferPhotoBulkDate}
+                    className="app-btn app-btn-secondary h-10"
+                    disabled={!photoTransferDate || photoMassMeta.length === 0}
+                  >
+                    Transfer
+                  </button>
+                </div>
+
                 {photoMassMeta.length > 0 && (
                   <div className="space-y-3">
                     {photoMassMeta.map((meta, index) => (
