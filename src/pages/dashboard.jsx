@@ -166,7 +166,7 @@ const Dashboard = () => {
 
   const getReliableFileDate = (file) => {
     const normalized = normalizeExifDate(file?.lastModified);
-    return normalized || new Date().toISOString().slice(0, 10);
+    return normalized || "00-00-0000";
   };
 
   const getTagValue = (tags, key) => {
@@ -623,7 +623,7 @@ const Dashboard = () => {
               src,
               path,
               dateCreated:
-                meta.dateCreated || meta.createdDate || meta.modifiedDate || new Date().toISOString(),
+                meta.dateCreated || meta.createdDate || meta.modifiedDate || "00-00-0000",
               cameraModel: meta.cameraModel || "",
               location: meta.location || "",
             });
@@ -641,7 +641,7 @@ const Dashboard = () => {
           name: photoForm.name || photoForm.file.name,
           src,
           path,
-          dateCreated: photoForm.dateCreated || new Date().toISOString(),
+          dateCreated: photoForm.dateCreated || "00-00-0000",
           description: photoForm.description,
           cameraModel: photoForm.cameraModel,
           location: photoForm.location,
@@ -760,7 +760,7 @@ const Dashboard = () => {
               name: file.name,
               src,
               path,
-              dateCreated: gamesForm.dateCreated || new Date().toISOString(),
+              dateCreated: gamesForm.dateCreated || "00-00-0000",
             });
           }
           return;
@@ -776,7 +776,7 @@ const Dashboard = () => {
           name: gamesForm.name || gamesForm.file.name,
           src,
           path,
-          dateCreated: gamesForm.dateCreated || new Date().toISOString(),
+          dateCreated: gamesForm.dateCreated || "00-00-0000",
           description: gamesForm.description,
           url: gamesForm.url,
         });
