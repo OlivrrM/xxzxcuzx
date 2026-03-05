@@ -10,6 +10,37 @@ const slugify = (value) =>
     .replaceAll(/\s+/g, "-")
     .replaceAll(/[^a-z0-9-]/g, "");
 
+const parseGameEmbed = (value) => {
+  const input = String(value || "").trim();
+  if (!input) return null;
+
+  if (!/^<iframe\b/i.test(input)) {
+    return {
+      src: input,
+      width: null,
+      height: null,
+      frameBorder: null,
+      allowFullScreen: true,
+    };
+  }
+
+  const srcMatch = /\bsrc\s*=\s*(["'])(.*?)\1/i.exec(input);
+  const src = srcMatch?.[2]?.trim() || "";
+  if (!src) return null;
+
+  const widthRaw = /\bwidth\s*=\s*(["'])(\d+)\1/i.exec(input)?.[2];
+  const heightRaw = /\bheight\s*=\s*(["'])(\d+)\1/i.exec(input)?.[2];
+  const frameBorderRaw = /\bframeborder\s*=\s*(["'])(\d+)\1/i.exec(input)?.[2];
+
+  return {
+    src,
+    width: widthRaw ? Number(widthRaw) : null,
+    height: heightRaw ? Number(heightRaw) : null,
+    frameBorder: frameBorderRaw ? Number(frameBorderRaw) : null,
+    allowFullScreen: /\ballowfullscreen\b/i.test(input),
+  };
+};
+
 const GameDetail = () => {
   const { gameName } = useParams();
   const { data: games, loading, error } = useImages("games");
@@ -54,6 +85,14 @@ const GameDetail = () => {
     { key: "steamLink", icon: FaSteam, label: "Steam" },
   ].filter((item) => Boolean(game[item.key]));
 
+  const rawEmbed = String(game.url || "").trim();
+  const hasIframeMarkup = /^<iframe\b/i.test(rawEmbed);
+  const canRenderEmbed = game.gameType === "web games" && hasIframeMarkup;
+  const embed = parseGameEmbed(game.url);
+  const embedRatio =
+    embed?.width && embed?.height ? `${embed.width} / ${embed.height}` : "16 / 9";
+  const embedMaxWidth = embed?.width ? `${embed.width}px` : undefined;
+
   return (
     <div className="p-4 w-full">
       <h1
@@ -63,20 +102,31 @@ const GameDetail = () => {
         {game.name}
       </h1>
 
-      {game.url && (
+      {canRenderEmbed && embed?.src && (
         <div className="w-full max-w-5xl mx-auto mb-6">
-          {React.createElement("iframe", {
-            src: game.url,
-            title: game.name || "game embed",
-            className: "w-full aspect-video border-2",
-            style: game.borderColor ? { borderColor: game.borderColor } : undefined,
-            allowFullScreen: true,
-            loading: "lazy",
-          })}
+          <div
+            className="mx-auto w-full border-2 overflow-hidden"
+            style={{
+              aspectRatio: embedRatio,
+              maxWidth: embedMaxWidth,
+              ...(game.borderColor ? { borderColor: game.borderColor } : {}),
+            }}
+          >
+            {React.createElement("iframe", {
+              src: embed.src,
+              title: game.name || "game embed",
+              className: "w-full h-full",
+              width: embed.width || undefined,
+              height: embed.height || undefined,
+              frameBorder: embed.frameBorder ?? 0,
+              allowFullScreen: embed.allowFullScreen,
+              loading: "lazy",
+            })}
+          </div>
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto text-left space-y-3">
+      <div className="max-w-5xl mx-auto text-center space-y-3">
         {game.description && (
           <p className="text-white">{game.description}</p>
         )}

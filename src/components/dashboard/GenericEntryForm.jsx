@@ -73,7 +73,7 @@ const GenericEntryForm = ({
         />
       </div>
 
-      {!isPhotography && (
+      {!isPhotography && !isGames && (
         <div>
           <label
             htmlFor={`${idPrefix}-url`}
@@ -87,6 +87,24 @@ const GenericEntryForm = ({
             value={formValues.url}
             onChange={(e) => onChange("url", e.target.value)}
             className="app-input w-full"
+          />
+        </div>
+      )}
+
+      {isGames && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-url`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            itch.io embed iframe (optional)
+          </label>
+          <textarea
+            id={`${idPrefix}-url`}
+            value={formValues.url}
+            onChange={(e) => onChange("url", e.target.value)}
+            className="app-input w-full min-h-24"
+            placeholder={'<iframe frameborder="0" src="https://itch.io/embed-upload/..." allowfullscreen="" width="450" height="820"></iframe>'}
           />
         </div>
       )}

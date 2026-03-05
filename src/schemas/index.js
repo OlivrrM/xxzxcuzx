@@ -20,6 +20,7 @@ export const softwareSchema = z.object({
 });
 
 export const gamesSchema = softwareSchema.extend({
+  url: z.string().optional(),
   gameType: z.enum(["web games", "pc games", "hacks"]),
   textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   borderColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),

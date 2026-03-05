@@ -445,6 +445,11 @@ const Dashboard = () => {
     }, {});
   };
 
+  const getGamesEmbedPayload = (form) => {
+    const embed = form.url?.trim();
+    return embed ? { url: embed } : {};
+  };
+
   const clearSimpleFormFields = (setter) => {
     setter((prev) => ({
       ...prev,
@@ -813,7 +818,7 @@ const Dashboard = () => {
         if (gamesForm.textColor) updates.textColor = gamesForm.textColor;
         if (gamesForm.borderColor) updates.borderColor = gamesForm.borderColor;
         if (gamesForm.description) updates.description = gamesForm.description;
-        if (gamesForm.url) updates.url = gamesForm.url;
+        Object.assign(updates, getGamesEmbedPayload(gamesForm));
         Object.assign(updates, getGamesPlatformLinksPayload(gamesForm));
 
         if (gamesForm.file) {
@@ -873,7 +878,7 @@ const Dashboard = () => {
           src,
           path,
           description: gamesForm.description,
-          url: gamesForm.url,
+          ...getGamesEmbedPayload(gamesForm),
           ...getGamesPlatformLinksPayload(gamesForm),
         });
       };
