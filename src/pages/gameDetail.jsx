@@ -159,7 +159,7 @@ const GameDetail = () => {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto text-center space-y-3">
+      <div className="max-w-5xl mx-auto text-center flex flex-col items-center gap-6">
         {game.description && (
           <p className="text-white">{game.description}</p>
         )}
@@ -256,7 +256,7 @@ const GameDetail = () => {
             href={hackPatchLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-blue-200 text-white p-4 mt-2"
+            className="bg-blue-200 text-white p-4 pt-2 pb-2"
           >
             Patch Now
           </a>
