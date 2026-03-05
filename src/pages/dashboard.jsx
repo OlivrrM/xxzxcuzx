@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
-import exifr from "exifr";
+import ExifReader from "exifreader";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useAuth } from "../contexts/AuthContext";
 import useImages from "../hooks/useImages";
@@ -164,11 +164,32 @@ const Dashboard = () => {
     return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
   };
 
-  const parseExifSafe = async (file, contextLabel) => {
+  const getReliableFileDate = (file) => {
+    const normalized = normalizeExifDate(file?.lastModified);
+    return normalized || new Date().toISOString().slice(0, 10);
+  };
+
+  const getTagValue = (tags, key) => {
+    const tag = tags?.[key];
+    if (!tag) return "";
+    if (typeof tag === "string") return tag;
+    if (typeof tag?.description === "string" && tag.description.trim()) {
+      return tag.description;
+    }
+    if (Array.isArray(tag?.value)) {
+      return tag.value[0] ?? "";
+    }
+    if (tag?.value) {
+      return tag.value;
+    }
+    return "";
+  };
+
+  const parseMetadataSafe = async (file, contextLabel) => {
     try {
-      return await exifr.parse(file);
+      return await ExifReader.load(file);
     } catch (error) {
-      console.warn(`[photo] exifr.parse failed (${contextLabel})`, {
+      console.warn(`[photo] ExifReader.load failed (${contextLabel})`, {
         fileName: file?.name,
         fileType: file?.type,
         error,
@@ -179,7 +200,7 @@ const Dashboard = () => {
 
   const getFirstExifDate = (metadata, keys) => {
     for (const key of keys) {
-      const normalized = normalizeExifDate(metadata?.[key]);
+      const normalized = normalizeExifDate(getTagValue(metadata, key));
       if (normalized) return normalized;
     }
     return "";
@@ -201,6 +222,7 @@ const Dashboard = () => {
     const modifiedDate =
       getFirstExifDate(metadata, [
         "ModifyDate",
+        "DateModified",
         "SubSecModifyDate",
         "FileModifyDate",
         "MetadataDate",
@@ -209,16 +231,19 @@ const Dashboard = () => {
       ]) || normalizeExifDate(file?.lastModified);
 
     const cameraModel =
-      metadata?.Model ||
-      metadata?.LensModel ||
-      metadata?.CameraModelName ||
-      [metadata?.Make, metadata?.Model].filter(Boolean).join(" ") ||
+      getTagValue(metadata, "Model") ||
+      getTagValue(metadata, "LensModel") ||
+      getTagValue(metadata, "CameraModelName") ||
+      [getTagValue(metadata, "Make"), getTagValue(metadata, "Model")]
+        .filter(Boolean)
+        .join(" ") ||
       "";
 
-    const location =
-      metadata?.GPSLatitude && metadata?.GPSLongitude
-        ? `${metadata.GPSLatitude},${metadata.GPSLongitude}`
-        : "";
+    const latitude =
+      getTagValue(metadata, "GPSLatitude") || getTagValue(metadata, "Latitude");
+    const longitude =
+      getTagValue(metadata, "GPSLongitude") || getTagValue(metadata, "Longitude");
+    const location = latitude && longitude ? `${latitude},${longitude}` : "";
 
     return {
       createdDate,
@@ -238,19 +263,20 @@ const Dashboard = () => {
   };
 
   const parsePhotoFileMeta = async (file) => {
+    const fallbackDate = getReliableFileDate(file);
     const base = {
       name: file.name,
-      createdDate: normalizeExifDate(file.lastModified),
-      modifiedDate: normalizeExifDate(file.lastModified),
-      dateCreated: normalizeExifDate(file.lastModified),
+      createdDate: fallbackDate,
+      modifiedDate: fallbackDate,
+      dateCreated: fallbackDate,
       cameraModel: "",
       location: "",
       previewUrl: URL.createObjectURL(file),
     };
 
     try {
-      const metadata = await parseExifSafe(file, "parsePhotoFileMeta");
-      console.log("[photo] full EXIF metadata (multiple)", {
+      const metadata = await parseMetadataSafe(file, "parsePhotoFileMeta");
+      console.log("[photo] full metadata (multiple)", {
         fileName: file.name,
         metadata,
       });
@@ -258,8 +284,11 @@ const Dashboard = () => {
 
       return {
         ...base,
-        ...extracted,
-        dateCreated: extracted.createdDate || extracted.modifiedDate || base.dateCreated,
+        cameraModel: extracted.cameraModel,
+        location: extracted.location,
+        createdDate: fallbackDate,
+        modifiedDate: fallbackDate,
+        dateCreated: fallbackDate,
       };
     } catch {
       return base;
@@ -443,8 +472,8 @@ const Dashboard = () => {
     }));
 
     try {
-      const metadata = await parseExifSafe(singleFile, "handlePhotoFileSelect");
-      console.log("[photo] full EXIF metadata (single)", {
+      const metadata = await parseMetadataSafe(singleFile, "handlePhotoFileSelect");
+      console.log("[photo] full metadata (single)", {
         fileName: singleFile.name,
         metadata,
       });
@@ -456,12 +485,8 @@ const Dashboard = () => {
 
       setPhotoForm((prev) => {
         const next = { ...prev };
-        const { createdDate, modifiedDate, cameraModel, location } = extracted;
-        if (photoDateSource === "modified" && modifiedDate) {
-          next.dateCreated = modifiedDate;
-        } else if (createdDate) {
-          next.dateCreated = createdDate;
-        }
+        const { cameraModel, location } = extracted;
+        next.dateCreated = getReliableFileDate(singleFile);
         if (cameraModel) {
           next.cameraModel = cameraModel;
         }
@@ -472,11 +497,7 @@ const Dashboard = () => {
       });
       console.log("[photo] applied autofill from upload", {
         preferredDateSource: photoDateSource,
-        appliedDate:
-          extracted[photoDateSource === "modified" ? "modifiedDate" : "createdDate"] ||
-          extracted.createdDate ||
-          extracted.modifiedDate ||
-          "",
+        appliedDate: getReliableFileDate(singleFile),
         cameraModel: extracted.cameraModel,
       });
     } catch (error) {
@@ -493,50 +514,17 @@ const Dashboard = () => {
     });
     if (!currentFile) return;
 
-    try {
-      const metadata = await parseExifSafe(currentFile, "setDateFromExif");
-      const extracted = extractPhotoExifFields(metadata, currentFile);
-      const sourceDate = kind === "created" ? extracted.createdDate : extracted.modifiedDate;
-      console.log("[photo] setDateFromExif extracted", {
-        kind,
-        createdDate: extracted.createdDate,
-        modifiedDate: extracted.modifiedDate,
-        chosenDate: sourceDate,
-      });
-
-      if (sourceDate) {
-        setPhotoForm((prev) => ({
-          ...prev,
-          dateCreated: sourceDate,
-        }));
-        setPhotoDateSource(kind);
-        console.log("[photo] date applied", { kind, appliedDate: sourceDate });
-      } else {
-        console.warn("[photo] no EXIF date found for requested kind", { kind, extracted });
-      }
-    } catch (error) {
-      const fallbackDate = normalizeExifDate(currentFile.lastModified);
-      if (fallbackDate) {
-        setPhotoForm((prev) => ({
-          ...prev,
-          dateCreated: fallbackDate,
-        }));
-        setPhotoDateSource(kind);
-        console.warn("[photo] failed applying EXIF date; used file.lastModified fallback", {
-          kind,
-          fileName: currentFile.name,
-          fallbackDate,
-          error,
-        });
-        return;
-      }
-
-      console.warn("[photo] failed applying EXIF date", {
-        kind,
-        fileName: currentFile.name,
-        error,
-      });
-    }
+    const sourceDate = getReliableFileDate(currentFile);
+    setPhotoForm((prev) => ({
+      ...prev,
+      dateCreated: sourceDate,
+    }));
+    setPhotoDateSource(kind);
+    console.log("[photo] date applied from file metadata", {
+      kind,
+      fileName: currentFile.name,
+      appliedDate: sourceDate,
+    });
   };
 
   const applyPhotoBulkDateSource = (kind) => {
@@ -578,10 +566,9 @@ const Dashboard = () => {
     }));
 
     try {
-      const metadata = await exifr.parse(singleFile);
-      if (!metadata?.DateTimeOriginal) return;
-      const date = new Date(metadata.DateTimeOriginal);
-      setGamesForm((prev) => ({ ...prev, dateCreated: date.toISOString().slice(0, 10) }));
+      const createdDate = getReliableFileDate(singleFile);
+      if (!createdDate) return;
+      setGamesForm((prev) => ({ ...prev, dateCreated: createdDate }));
     } catch (error) {
       console.warn("Failed to read EXIF metadata", error);
     }
@@ -591,22 +578,12 @@ const Dashboard = () => {
     const currentFile = gamesForm.file || gamesForm.massFiles[0];
     if (!currentFile) return;
 
-    try {
-      const metadata = await exifr.parse(currentFile);
-      if (!metadata) return;
-
-      const sourceDate =
-        kind === "created" ? metadata.DateTimeOriginal : metadata.ModifyDate;
-
-      if (sourceDate) {
-        const date = new Date(sourceDate);
-        setGamesForm((prev) => ({
-          ...prev,
-          dateCreated: date.toISOString().slice(0, 10),
-        }));
-      }
-    } catch {
-      // no-op
+    const sourceDate = getReliableFileDate(currentFile);
+    if (sourceDate) {
+      setGamesForm((prev) => ({
+        ...prev,
+        dateCreated: sourceDate,
+      }));
     }
   };
 
@@ -1276,9 +1253,6 @@ const Dashboard = () => {
                               className="app-input w-full"
                             />
                           </div>
-                          <p className="text-xs text-white/70 md:col-span-2">
-                            Created: {meta.createdDate || "—"} • Modified: {meta.modifiedDate || "—"}
-                          </p>
                         </div>
                       </div>
                     ))}

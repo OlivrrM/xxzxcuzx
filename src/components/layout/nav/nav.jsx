@@ -13,7 +13,7 @@ const Nav = () => {
   };
 
   return (
-    <nav className="relative p-2 m-4">
+    <nav className="relative z-10 p-2 m-4">
       {/* top-right buttons */}
       {user && (
         <div className="fixed bottom-0 right-0 m-4 flex gap-6">
