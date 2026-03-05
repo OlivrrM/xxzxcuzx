@@ -56,15 +56,20 @@ const GameDetail = () => {
 
   return (
     <div className="p-4 w-full">
-      <h1 className="text-3xl font-bold mb-6">{game.name}</h1>
+      <h1
+        className="text-3xl font-bold mb-6"
+        style={game.textColor ? { color: game.textColor } : undefined}
+      >
+        {game.name}
+      </h1>
 
       {game.url && (
         <div className="w-full max-w-5xl mx-auto mb-6">
           {React.createElement("iframe", {
             src: game.url,
             title: game.name || "game embed",
-            className: "w-full border-0",
-            height: "600",
+            className: "w-full aspect-video border-2",
+            style: game.borderColor ? { borderColor: game.borderColor } : undefined,
             allowFullScreen: true,
             loading: "lazy",
           })}

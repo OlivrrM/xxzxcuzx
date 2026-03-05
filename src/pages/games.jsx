@@ -20,7 +20,6 @@ const Games = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Games</h1>
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">Error loading entries</p>}
       {!loading && !error && games.length === 0 && (
@@ -32,8 +31,8 @@ const Games = () => {
         if (groupGames.length === 0) return null;
 
         return (
-          <section key={group.key} className="mb-10">
-            <h2 className="text-xl font-semibold mb-4">{group.title}</h2>
+          <section key={group.key} className="mb-10 border-white border-t-2 pt-6">
+            <h1 className="text-4xl font-bold mb-4">* {group.title} *</h1>
             <ul className="flex flex-wrap gap-6 justify-center">
               {groupGames.map((game) => {
                 const content = (
@@ -47,7 +46,7 @@ const Games = () => {
                       />
                     )}
                     <p
-                      className="mt-2 text-center font-semibold"
+                      className="mt-2 text-2xl text-center font-semibold"
                       style={game.textColor ? { color: game.textColor } : undefined}
                     >
                       {game.name}
