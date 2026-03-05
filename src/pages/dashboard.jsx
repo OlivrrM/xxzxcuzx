@@ -514,17 +514,35 @@ const Dashboard = () => {
     });
     if (!currentFile) return;
 
-    const sourceDate = getReliableFileDate(currentFile);
-    setPhotoForm((prev) => ({
-      ...prev,
-      dateCreated: sourceDate,
-    }));
-    setPhotoDateSource(kind);
-    console.log("[photo] date applied from file metadata", {
-      kind,
-      fileName: currentFile.name,
-      appliedDate: sourceDate,
-    });
+    try {
+      const metadata = await parseMetadataSafe(currentFile, "setDateFromExif");
+      const extracted = extractPhotoExifFields(metadata, currentFile);
+      const sourceDate =
+        kind === "created" ? extracted.createdDate : extracted.modifiedDate;
+      const resolvedDate = sourceDate || "00-00-0000";
+
+      setPhotoForm((prev) => ({
+        ...prev,
+        dateCreated: resolvedDate,
+      }));
+      setPhotoDateSource(kind);
+      console.log("[photo] date applied from selected source", {
+        kind,
+        fileName: currentFile.name,
+        appliedDate: resolvedDate,
+      });
+    } catch (error) {
+      setPhotoForm((prev) => ({
+        ...prev,
+        dateCreated: "00-00-0000",
+      }));
+      setPhotoDateSource(kind);
+      console.warn("[photo] failed applying selected source date; using fallback", {
+        kind,
+        fileName: currentFile.name,
+        error,
+      });
+    }
   };
 
   const applyPhotoBulkDateSource = (kind) => {
@@ -534,8 +552,8 @@ const Dashboard = () => {
         ...entry,
         dateCreated:
           kind === "modified"
-            ? entry.modifiedDate || entry.createdDate || entry.dateCreated
-            : entry.createdDate || entry.modifiedDate || entry.dateCreated,
+            ? entry.modifiedDate || entry.createdDate || entry.dateCreated || "00-00-0000"
+            : entry.createdDate || entry.modifiedDate || entry.dateCreated || "00-00-0000",
       }))
     );
   };
@@ -1105,7 +1123,10 @@ const Dashboard = () => {
                       type="button"
                       onClick={() => setDateFromExif("created")}
                       className="app-btn app-btn-secondary"
-                      disabled={!photoForm.file && photoForm.massFiles.length === 0}
+                      disabled={
+                        (!photoForm.file && photoForm.massFiles.length === 0) ||
+                        photoDateSource === "created"
+                      }
                     >
                       Use created
                     </button>
@@ -1113,7 +1134,10 @@ const Dashboard = () => {
                       type="button"
                       onClick={() => setDateFromExif("modified")}
                       className="app-btn app-btn-secondary"
-                      disabled={!photoForm.file && photoForm.massFiles.length === 0}
+                      disabled={
+                        (!photoForm.file && photoForm.massFiles.length === 0) ||
+                        photoDateSource === "modified"
+                      }
                     >
                       Use modified
                     </button>
