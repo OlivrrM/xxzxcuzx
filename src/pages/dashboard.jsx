@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import exifr from "exifr";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useAuth } from "../contexts/AuthContext";
 import useImages from "../hooks/useImages";
 import { addItem } from "../utils/firestore";
@@ -44,6 +45,20 @@ const Dashboard = () => {
     software: "",
     games: "",
     placeHolder: "",
+  });
+
+  const [sectionBusy, setSectionBusy] = useState({
+    photography: false,
+    software: false,
+    games: false,
+    placeHolder: false,
+  });
+
+  const sectionCancelRef = useRef({
+    photography: false,
+    software: false,
+    games: false,
+    placeHolder: false,
   });
 
   const [photoForm, setPhotoForm] = useState({
@@ -93,6 +108,31 @@ const Dashboard = () => {
     setStatus((prev) => ({ ...prev, [section]: message }));
   };
 
+  const beginSectionWork = (section, message) => {
+    sectionCancelRef.current[section] = false;
+    setSectionBusy((prev) => ({ ...prev, [section]: true }));
+    if (message) {
+      setSectionStatus(section, message);
+    }
+  };
+
+  const finishSectionWork = (section) => {
+    sectionCancelRef.current[section] = false;
+    setSectionBusy((prev) => ({ ...prev, [section]: false }));
+  };
+
+  const requestSectionCancel = (section) => {
+    sectionCancelRef.current[section] = true;
+    setSectionStatus(section, "Cancel requested...");
+  };
+
+  const throwIfCancelled = (section) => {
+    if (!sectionCancelRef.current[section]) return;
+    const error = new Error("Operation cancelled");
+    error.name = "OperationCancelled";
+    throw error;
+  };
+
   const [photoEditSnapshot, setPhotoEditSnapshot] = useState(null);
   const [softwareEditSnapshot, setSoftwareEditSnapshot] = useState(null);
   const [gamesEditSnapshot, setGamesEditSnapshot] = useState(null);
@@ -104,7 +144,16 @@ const Dashboard = () => {
 
   const normalizeExifDate = (value) => {
     if (!value) return "";
-    const date = new Date(value);
+    let normalizedValue = value;
+    if (typeof value?.toDate === "function") {
+      normalizedValue = value.toDate();
+    } else if (value?.date) {
+      normalizedValue = value.date;
+    } else if (value?.value) {
+      normalizedValue = value.value;
+    }
+
+    const date = new Date(normalizedValue);
     return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
   };
 
@@ -132,6 +181,8 @@ const Dashboard = () => {
   const extractPhotoExifFields = (metadata, file) => {
     const createdDate = getFirstExifDate(metadata, [
       "DateTimeOriginal",
+      "DateCreated",
+      "SubSecDateTimeOriginal",
       "CreateDate",
       "MediaCreateDate",
       "TrackCreateDate",
@@ -180,6 +231,7 @@ const Dashboard = () => {
       name: file.name,
       createdDate: normalizeExifDate(file.lastModified),
       modifiedDate: normalizeExifDate(file.lastModified),
+      dateCreated: normalizeExifDate(file.lastModified),
       cameraModel: "",
       location: "",
       previewUrl: URL.createObjectURL(file),
@@ -192,10 +244,19 @@ const Dashboard = () => {
       return {
         ...base,
         ...extracted,
+        dateCreated: extracted.createdDate || extracted.modifiedDate || base.dateCreated,
       };
     } catch {
       return base;
     }
+  };
+
+  const updatePhotoStagedMeta = (index, field, value) => {
+    setPhotoMassMeta((prev) =>
+      prev.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: value } : entry
+      )
+    );
   };
 
   const handlePhotoModeChange = (mode) => {
@@ -379,8 +440,8 @@ const Dashboard = () => {
         const { createdDate, modifiedDate, cameraModel, location } = extracted;
         if (photoDateSource === "modified" && modifiedDate) {
           next.dateCreated = modifiedDate;
-        } else if (createdDate || modifiedDate) {
-          next.dateCreated = createdDate || modifiedDate;
+        } else if (createdDate) {
+          next.dateCreated = createdDate;
         }
         if (cameraModel) {
           next.cameraModel = cameraModel;
@@ -416,10 +477,7 @@ const Dashboard = () => {
     try {
       const metadata = await parseExifSafe(currentFile, "setDateFromExif");
       const extracted = extractPhotoExifFields(metadata, currentFile);
-      const sourceDate =
-        kind === "created"
-          ? extracted.createdDate || extracted.modifiedDate
-          : extracted.modifiedDate || extracted.createdDate;
+      const sourceDate = kind === "created" ? extracted.createdDate : extracted.modifiedDate;
       console.log("[photo] setDateFromExif extracted", {
         kind,
         createdDate: extracted.createdDate,
@@ -435,20 +493,7 @@ const Dashboard = () => {
         setPhotoDateSource(kind);
         console.log("[photo] date applied", { kind, appliedDate: sourceDate });
       } else {
-        const fallbackDate = normalizeExifDate(currentFile.lastModified);
-        if (fallbackDate) {
-          setPhotoForm((prev) => ({
-            ...prev,
-            dateCreated: fallbackDate,
-          }));
-          setPhotoDateSource(kind);
-          console.warn("[photo] no EXIF date found; applied file.lastModified fallback", {
-            kind,
-            fallbackDate,
-          });
-        } else {
-          console.warn("[photo] no EXIF date found for requested kind", { kind, extracted });
-        }
+        console.warn("[photo] no EXIF date found for requested kind", { kind, extracted });
       }
     } catch (error) {
       const fallbackDate = normalizeExifDate(currentFile.lastModified);
@@ -477,6 +522,15 @@ const Dashboard = () => {
 
   const applyPhotoBulkDateSource = (kind) => {
     setPhotoBulkDateSource(kind);
+    setPhotoMassMeta((prev) =>
+      prev.map((entry) => ({
+        ...entry,
+        dateCreated:
+          kind === "modified"
+            ? entry.modifiedDate || entry.createdDate || entry.dateCreated
+            : entry.createdDate || entry.modifiedDate || entry.dateCreated,
+      }))
+    );
   };
 
   const handleGamesFileSelect = async (e) => {
@@ -539,13 +593,15 @@ const Dashboard = () => {
 
   const handlePhotographySubmit = async (e) => {
     e.preventDefault();
+    if (sectionBusy.photography) return;
     if (!photoForm.file && photoForm.massFiles.length === 0 && !photoForm.editItem) {
       return;
     }
 
-    setSectionStatus("photography", "Saving...");
+    beginSectionWork("photography", "Saving...");
     try {
       const runPhotoEdit = async () => {
+        throwIfCancelled("photography");
         const updates = { name: photoForm.name };
         if (photoForm.description) updates.description = photoForm.description;
         if (photoForm.dateCreated) updates.dateCreated = photoForm.dateCreated;
@@ -561,19 +617,17 @@ const Dashboard = () => {
       const runPhotoUpload = async () => {
         if (photoForm.massFiles.length > 0) {
           for (const [index, file] of photoForm.massFiles.entries()) {
+            throwIfCancelled("photography");
             const meta = photoMassMeta[index] || {};
-            const selectedDate =
-              photoBulkDateSource === "modified"
-                ? meta.modifiedDate
-                : meta.createdDate;
             const path = `photography/${Date.now()}_${file.name}`;
             const src = await uploadFileToGitHub(file, path);
+            throwIfCancelled("photography");
             await addItem("photography", {
               name: meta.name || file.name,
               src,
               path,
               dateCreated:
-                selectedDate || meta.createdDate || meta.modifiedDate || new Date().toISOString(),
+                meta.dateCreated || meta.createdDate || meta.modifiedDate || new Date().toISOString(),
               cameraModel: meta.cameraModel || "",
               location: meta.location || "",
             });
@@ -582,9 +636,11 @@ const Dashboard = () => {
         }
 
         if (!photoForm.file) return;
+        throwIfCancelled("photography");
         setSectionStatus("photography", "Uploading to GitHub...");
         const path = `photography/${Date.now()}_${photoForm.file.name}`;
         const src = await uploadFileToGitHub(photoForm.file, path);
+        throwIfCancelled("photography");
         await addItem("photography", {
           name: photoForm.name || photoForm.file.name,
           src,
@@ -602,13 +658,20 @@ const Dashboard = () => {
       }
 
       await runPhotoUpload();
+      throwIfCancelled("photography");
 
       reloadPhotography();
       setSectionStatus("photography", "Upload complete");
       resetPhotoForm();
     } catch (error) {
       console.error(error);
-      setSectionStatus("photography", `Error: ${error.message}`);
+      if (error.name === "OperationCancelled") {
+        setSectionStatus("photography", "Cancelled");
+      } else {
+        setSectionStatus("photography", `Error: ${error.message}`);
+      }
+    } finally {
+      finishSectionWork("photography");
     }
   };
 
@@ -621,30 +684,41 @@ const Dashboard = () => {
   }) => {
     return async (e) => {
       e.preventDefault();
+      if (sectionBusy[section]) return;
       if (!form.name && !form.editItem) return;
 
-      setSectionStatus(section, "Saving...");
+      beginSectionWork(section, "Saving...");
       try {
+        throwIfCancelled(section);
         const payload = { name: form.name };
         if (form.url) payload.url = form.url;
         if (form.description) payload.description = form.description;
         if (form.dateCreated) payload.dateCreated = form.dateCreated;
 
         if (form.editItem) {
+          throwIfCancelled(section);
           await updateDoc(doc(db, collection, form.editItem.id), payload);
           setSectionStatus(section, "Update complete");
           if (collection === "software") setSoftwareEditSnapshot(null);
           if (collection === "placeHolder") setPlaceHolderEditSnapshot(null);
         } else {
+          throwIfCancelled(section);
           await addItem(collection, payload);
           setSectionStatus(section, "Saved");
         }
 
+        throwIfCancelled(section);
         reload();
         resetSimpleForm(setter);
       } catch (error) {
         console.error(error);
-        setSectionStatus(section, `Error: ${error.message}`);
+        if (error.name === "OperationCancelled") {
+          setSectionStatus(section, "Cancelled");
+        } else {
+          setSectionStatus(section, `Error: ${error.message}`);
+        }
+      } finally {
+        finishSectionWork(section);
       }
     };
   };
@@ -659,13 +733,15 @@ const Dashboard = () => {
 
   const handleGamesSubmit = async (e) => {
     e.preventDefault();
+    if (sectionBusy.games) return;
     if (!gamesForm.file && gamesForm.massFiles.length === 0 && !gamesForm.editItem) {
       return;
     }
 
-    setSectionStatus("games", "Saving...");
+    beginSectionWork("games", "Saving...");
     try {
       const runGamesEdit = async () => {
+        throwIfCancelled("games");
         const updates = { name: gamesForm.name };
         if (gamesForm.description) updates.description = gamesForm.description;
         if (gamesForm.dateCreated) updates.dateCreated = gamesForm.dateCreated;
@@ -680,8 +756,10 @@ const Dashboard = () => {
       const runGamesUpload = async () => {
         if (gamesForm.massFiles.length > 0) {
           for (const file of gamesForm.massFiles) {
+            throwIfCancelled("games");
             const path = `games/${Date.now()}_${file.name}`;
             const src = await uploadFileToGitHub(file, path);
+            throwIfCancelled("games");
             await addItem("games", {
               name: file.name,
               src,
@@ -693,9 +771,11 @@ const Dashboard = () => {
         }
 
         if (!gamesForm.file) return;
+        throwIfCancelled("games");
         setSectionStatus("games", "Uploading to GitHub...");
         const path = `games/${Date.now()}_${gamesForm.file.name}`;
         const src = await uploadFileToGitHub(gamesForm.file, path);
+        throwIfCancelled("games");
         await addItem("games", {
           name: gamesForm.name || gamesForm.file.name,
           src,
@@ -712,13 +792,20 @@ const Dashboard = () => {
       }
 
       await runGamesUpload();
+      throwIfCancelled("games");
 
       reloadGames();
       setSectionStatus("games", "Upload complete");
       resetGamesForm();
     } catch (error) {
       console.error(error);
-      setSectionStatus("games", `Error: ${error.message}`);
+      if (error.name === "OperationCancelled") {
+        setSectionStatus("games", "Cancelled");
+      } else {
+        setSectionStatus("games", `Error: ${error.message}`);
+      }
+    } finally {
+      finishSectionWork("games");
     }
   };
 
@@ -732,14 +819,18 @@ const Dashboard = () => {
 
   const handleDelete = async (collection, item) => {
     if (!item?.id) return;
+    if (sectionBusy[collection]) return;
     if (!window.confirm("Delete this item?")) return;
 
-    setSectionStatus(collection, "Deleting...");
+    beginSectionWork(collection, "Deleting...");
     try {
+      throwIfCancelled(collection);
       await deleteDoc(doc(db, collection, item.id));
+      throwIfCancelled(collection);
 
       if (collection === "photography" && item.path) {
         try {
+          throwIfCancelled(collection);
           await deleteFileFromGitHub(item.path);
         } catch (error) {
           setSectionStatus(
@@ -753,6 +844,7 @@ const Dashboard = () => {
 
       if (collection === "games" && item.path) {
         try {
+          throwIfCancelled(collection);
           await deleteFileFromGitHub(item.path);
         } catch (error) {
           setSectionStatus("games", `Firestore deleted; GitHub error: ${error.message}`);
@@ -769,7 +861,13 @@ const Dashboard = () => {
       setSectionStatus(collection, "Deleted");
     } catch (error) {
       console.error(error);
-      setSectionStatus(collection, `Error: ${error.message}`);
+      if (error.name === "OperationCancelled") {
+        setSectionStatus(collection, "Cancelled");
+      } else {
+        setSectionStatus(collection, `Error: ${error.message}`);
+      }
+    } finally {
+      finishSectionWork(collection);
     }
   };
 
@@ -896,7 +994,20 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <section className="bg-black/60 border border-white/20  p-6">
+        <section className="relative bg-black/60 border border-white/20  p-6">
+          {sectionBusy.photography && (
+            <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
+              <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
+              <p className="text-white">Working...</p>
+              <button
+                type="button"
+                onClick={() => requestSectionCancel("photography")}
+                className="app-btn app-btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between mb-4 gap-4">
             <h2 className="text-3xl font-semibold text-start">Photography</h2>
             <div className="flex items-center gap-2">
@@ -1066,38 +1177,92 @@ const Dashboard = () => {
                 </div>
 
                 {photoMassMeta.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {photoMassMeta.map((meta) => {
-                      const activeDate =
-                        photoBulkDateSource === "modified"
-                          ? meta.modifiedDate || meta.createdDate
-                          : meta.createdDate || meta.modifiedDate;
-
-                      return (
-                        <div key={meta.previewUrl} className="relative group">
-                          <img
-                            src={meta.previewUrl}
-                            alt={meta.name}
-                            className="w-full h-32 object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/75 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity p-2 text-start">
-                            <p className="truncate">
-                              <b>Name:</b> {meta.name}
-                            </p>
-                            <p className="truncate">
-                              <b>Model:</b> {meta.cameraModel || "—"}
-                            </p>
-                            <p>
-                              <b>
-                                Date ({photoBulkDateSource === "modified" ? "modified" : "created"}
-                                ):
-                              </b>{" "}
-                              {activeDate || "—"}
-                            </p>
+                  <div className="space-y-3">
+                    {photoMassMeta.map((meta, index) => (
+                      <div
+                        key={meta.previewUrl}
+                        className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-4 bg-white/10 p-3"
+                      >
+                        <img
+                          src={meta.previewUrl}
+                          alt={meta.name}
+                          className="w-full h-32 object-cover"
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-start">
+                          <div>
+                            <label
+                              htmlFor={`photo-stage-name-${index}`}
+                              className="block text-xs mb-1"
+                            >
+                              Name
+                            </label>
+                            <input
+                              id={`photo-stage-name-${index}`}
+                              type="text"
+                              value={meta.name || ""}
+                              onChange={(e) =>
+                                updatePhotoStagedMeta(index, "name", e.target.value)
+                              }
+                              className="app-input w-full"
+                            />
                           </div>
+                          <div>
+                            <label
+                              htmlFor={`photo-stage-date-${index}`}
+                              className="block text-xs mb-1"
+                            >
+                              Date
+                            </label>
+                            <input
+                              id={`photo-stage-date-${index}`}
+                              type="date"
+                              value={meta.dateCreated || ""}
+                              onChange={(e) =>
+                                updatePhotoStagedMeta(index, "dateCreated", e.target.value)
+                              }
+                              className="app-input w-full"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`photo-stage-camera-${index}`}
+                              className="block text-xs mb-1"
+                            >
+                              Camera model
+                            </label>
+                            <input
+                              id={`photo-stage-camera-${index}`}
+                              type="text"
+                              value={meta.cameraModel || ""}
+                              onChange={(e) =>
+                                updatePhotoStagedMeta(index, "cameraModel", e.target.value)
+                              }
+                              className="app-input w-full"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`photo-stage-location-${index}`}
+                              className="block text-xs mb-1"
+                            >
+                              Location
+                            </label>
+                            <input
+                              id={`photo-stage-location-${index}`}
+                              type="text"
+                              value={meta.location || ""}
+                              onChange={(e) =>
+                                updatePhotoStagedMeta(index, "location", e.target.value)
+                              }
+                              className="app-input w-full"
+                            />
+                          </div>
+                          <p className="text-xs text-white/70 md:col-span-2">
+                            Created: {meta.createdDate || "—"} • Modified: {meta.modifiedDate || "—"}
+                          </p>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
@@ -1171,7 +1336,20 @@ const Dashboard = () => {
           )}
         </section>
 
-        <section className="bg-black/60 border border-white/20  p-6">
+        <section className="relative bg-black/60 border border-white/20  p-6">
+          {sectionBusy.software && (
+            <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
+              <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
+              <p className="text-white">Working...</p>
+              <button
+                type="button"
+                onClick={() => requestSectionCancel("software")}
+                className="app-btn app-btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
           <h2 className="text-3xl font-semibold text-start mb-4">Software</h2>
 
           <GenericEntryForm
@@ -1218,7 +1396,20 @@ const Dashboard = () => {
           {softwareError && <p className="mt-2 text-red-400">{softwareError.message}</p>}
         </section>
 
-        <section className="bg-black/60 border border-white/20  p-6">
+        <section className="relative bg-black/60 border border-white/20  p-6">
+          {sectionBusy.games && (
+            <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
+              <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
+              <p className="text-white">Working...</p>
+              <button
+                type="button"
+                onClick={() => requestSectionCancel("games")}
+                className="app-btn app-btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
           <h2 className="text-3xl text-start font-semibold mb-4">Games</h2>
 
             <GenericEntryForm
@@ -1269,7 +1460,20 @@ const Dashboard = () => {
             {gamesError && <p className="mt-2 text-red-400">{gamesError.message}</p>}
         </section>
 
-        <section className="bg-black/60 border border-white/20  p-6">
+        <section className="relative bg-black/60 border border-white/20  p-6">
+          {sectionBusy.placeHolder && (
+            <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
+              <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
+              <p className="text-white">Working...</p>
+              <button
+                type="button"
+                onClick={() => requestSectionCancel("placeHolder")}
+                className="app-btn app-btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
           <h2 className="text-3xl text-start font-semibold mb-4">Place Holder</h2>
 
           <GenericEntryForm

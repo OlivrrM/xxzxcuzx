@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import useImages from "../../hooks/useImages";
 import { useNavigate, useParams } from "react-router";
 import arrow from "../../assets/FreeVector-3D-Arrow-Vector-Graphics.png"
@@ -6,6 +7,29 @@ const Photo = () => {
   const { index } = useParams();
   const navigate = useNavigate();
   const { data: images, loading, error } = useImages("photography");
+  const resolvedImages = images ?? [];
+  const idx = Number.parseInt(index, 10);
+  const invalidIndex = Number.isNaN(idx);
+  const image = invalidIndex ? null : resolvedImages[idx];
+  const maxIndex = resolvedImages.length - 1;
+  const canGoPrevious = idx > 0;
+  const canGoNext = idx < maxIndex;
+
+  useEffect(() => {
+    if (!image) return;
+
+    const scrollToBottom = () => {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: "auto",
+      });
+    };
+
+    scrollToBottom();
+    const timer = setTimeout(scrollToBottom, 0);
+
+    return () => clearTimeout(timer);
+  }, [image?.id, image?.src, idx]);
 
   if (loading) {
     return (
@@ -24,13 +48,6 @@ const Photo = () => {
       </div>
     );
   }
-
-  const idx = Number.parseInt(index, 10);
-  const invalidIndex = Number.isNaN(idx);
-  const image = invalidIndex ? null : images[idx];
-  const maxIndex = images.length - 1;
-  const canGoPrevious = idx > 0;
-  const canGoNext = idx < maxIndex;
 
   const goToPrevious = () => {
     if (!canGoPrevious) return;

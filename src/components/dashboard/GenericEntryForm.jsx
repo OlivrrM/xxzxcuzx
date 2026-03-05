@@ -18,6 +18,8 @@ const GenericEntryForm = ({
   submitDisabled,
   clearDisabled,
   revertDisabled,
+  statusMessage,
+  statusClassName,
 }) => {
   const isPhotography = section === "photography";
   const isMediaUploadSection = section === "photography" || section === "games";
@@ -170,7 +172,7 @@ const GenericEntryForm = ({
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center flex-wrap">
         {isEditing && (
           <button type="button" onClick={onCancelEdit} className="app-btn app-btn-secondary">
             Cancel
@@ -197,6 +199,11 @@ const GenericEntryForm = ({
         <button type="submit" className="app-btn app-btn-primary" disabled={submitDisabled}>
           {submitLabel}
         </button>
+        {statusMessage && (
+          <p className={`ml-auto text-sm text-right ${statusClassName}`}>
+            {statusMessage}
+          </p>
+        )}
       </div>
     </form>
   );
@@ -226,6 +233,8 @@ GenericEntryForm.propTypes = {
   submitDisabled: PropTypes.bool,
   clearDisabled: PropTypes.bool,
   revertDisabled: PropTypes.bool,
+  statusMessage: PropTypes.string,
+  statusClassName: PropTypes.string,
 };
 
 GenericEntryForm.defaultProps = {
@@ -237,6 +246,8 @@ GenericEntryForm.defaultProps = {
   submitDisabled: false,
   clearDisabled: false,
   revertDisabled: false,
+  statusMessage: "",
+  statusClassName: "text-green-300",
 };
 
 export default GenericEntryForm;
