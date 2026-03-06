@@ -41,31 +41,31 @@ const Dashboard = () => {
     reload: reloadGames,
   } = useImages("games");
   const {
-    data: placeHolderItems,
-    loading: placeHolderLoading,
-    error: placeHolderError,
-    reload: reloadPlaceHolder,
-  } = useImages("placeHolder");
+    data: billboardItems,
+    loading: billboardLoading,
+    error: billboardError,
+    reload: reloadBillboard,
+  } = useImages("billboard");
 
   const [status, setStatus] = useState({
     photography: "",
     software: "",
     games: "",
-    placeHolder: "",
+    billboard: "",
   });
 
   const [sectionBusy, setSectionBusy] = useState({
     photography: false,
     software: false,
     games: false,
-    placeHolder: false,
+    billboard: false,
   });
 
   const sectionCancelRef = useRef({
     photography: false,
     software: false,
     games: false,
-    placeHolder: false,
+    billboard: false,
   });
 
   const [photoForm, setPhotoForm] = useState({
@@ -123,12 +123,13 @@ const Dashboard = () => {
 
   const isValidHexColor = (value) => /^#[0-9A-Fa-f]{6}$/.test(value || "");
 
-  const [placeHolderForm, setPlaceHolderForm] = useState({
+  const [billboardForm, setBillboardForm] = useState({
+    file: null,
+    massFiles: [],
     editItem: null,
     name: "",
+    blurb: "",
     url: "",
-    description: "",
-    dateCreated: "",
   });
 
   useEffect(() => {
@@ -169,7 +170,7 @@ const Dashboard = () => {
   const [photoEditSnapshot, setPhotoEditSnapshot] = useState(null);
   const [softwareEditSnapshot, setSoftwareEditSnapshot] = useState(null);
   const [gamesEditSnapshot, setGamesEditSnapshot] = useState(null);
-  const [placeHolderEditSnapshot, setPlaceHolderEditSnapshot] = useState(null);
+  const [billboardEditSnapshot, setBillboardEditSnapshot] = useState(null);
   const [photoDateSource, setPhotoDateSource] = useState("created");
   const [photoUploadMode, setPhotoUploadMode] = useState("single");
   const [photoMassMeta, setPhotoMassMeta] = useState([]);
@@ -398,13 +399,14 @@ const Dashboard = () => {
     });
   };
 
-  const resetSimpleForm = (setter) => {
-    setter({
+  const resetBillboardForm = () => {
+    setBillboardForm({
+      file: null,
+      massFiles: [],
       editItem: null,
       name: "",
+      blurb: "",
       url: "",
-      description: "",
-      dateCreated: "",
     });
   };
 
@@ -1192,13 +1194,95 @@ const Dashboard = () => {
     }
   };
 
-  const handlePlaceHolderSubmit = createSimpleSubmitHandler({
-    section: "placeHolder",
-    form: placeHolderForm,
-    setter: setPlaceHolderForm,
-    collection: "placeHolder",
-    reload: reloadPlaceHolder,
-  });
+  const handleBillboardSubmit = async (e) => {
+    e.preventDefault();
+    if (sectionBusy.billboard) return;
+    if (!billboardForm.file && billboardForm.massFiles.length === 0 && !billboardForm.editItem) {
+      return;
+    }
+
+    beginSectionWork("billboard", "Saving...");
+    try {
+      const runBillboardEdit = async () => {
+        throwIfCancelled("billboard");
+        const updates = { name: billboardForm.name };
+        if (billboardForm.blurb) updates.blurb = billboardForm.blurb;
+        if (billboardForm.url) updates.url = billboardForm.url;
+
+        if (billboardForm.file) {
+          setSectionStatus("billboard", "Uploading replacement image...");
+          const replacementPath = `billboard/${Date.now()}_${billboardForm.file.name}`;
+          const replacementSrc = await compressAndUploadFile(billboardForm.file, replacementPath);
+          throwIfCancelled("billboard");
+          updates.path = replacementPath;
+          updates.src = replacementSrc;
+
+          if (billboardForm.editItem?.path) {
+            try {
+              await deleteFileFromGitHub(billboardForm.editItem.path);
+            } catch (error) {
+              console.warn("Failed to delete old billboard image from GitHub", error);
+            }
+          }
+        }
+
+        await updateDoc(doc(db, "billboard", billboardForm.editItem.id), updates);
+        reloadBillboard();
+        setSectionStatus("billboard", "Update complete");
+        resetBillboardForm();
+      };
+
+      const runBillboardUpload = async () => {
+        if (billboardForm.massFiles.length > 0) {
+          for (const file of billboardForm.massFiles) {
+            throwIfCancelled("billboard");
+            const path = `billboard/${Date.now()}_${file.name}`;
+            const src = await compressAndUploadFile(file, path);
+            throwIfCancelled("billboard");
+            await addItem("billboard", {
+              name: file.name,
+              src,
+              path,
+              blurb: billboardForm.blurb,
+              url: billboardForm.url,
+            });
+          }
+          return;
+        }
+
+        if (!billboardForm.file) return;
+        throwIfCancelled("billboard");
+        setSectionStatus("billboard", "Uploading to GitHub...");
+        const path = `billboard/${Date.now()}_${billboardForm.file.name}`;
+        const src = await compressAndUploadFile(billboardForm.file, path);
+        throwIfCancelled("billboard");
+        await addItem("billboard", {
+          name: billboardForm.name || billboardForm.file.name,
+          src,
+          path,
+          blurb: billboardForm.blurb,
+          url: billboardForm.url,
+        });
+      };
+
+      if (billboardForm.editItem) {
+        await runBillboardEdit();
+        return;
+      }
+
+      await runBillboardUpload();
+      throwIfCancelled("billboard");
+
+      reloadBillboard();
+      setSectionStatus("billboard", "Upload complete");
+      resetBillboardForm();
+    } catch (error) {
+      console.error("Billboard submit error:", error);
+      setSectionStatus("billboard", `Error: ${error.message}`);
+    } finally {
+      endSectionWork("billboard");
+    }
+  };
 
   const handleDelete = async (collection, item) => {
     if (!item?.id) return;
@@ -1305,11 +1389,12 @@ const Dashboard = () => {
     !softwareForm.description &&
     !softwareForm.dateCreated;
 
-  const placeHolderClearDisabled =
-    !placeHolderForm.name &&
-    !placeHolderForm.url &&
-    !placeHolderForm.description &&
-    !placeHolderForm.dateCreated;
+  const billboardClearDisabled =
+    !billboardForm.file &&
+    billboardForm.massFiles.length === 0 &&
+    !billboardForm.name &&
+    !billboardForm.blurb &&
+    !billboardForm.url;
 
   let photoSubmitDisabled;
   if (photoForm.editItem) {
@@ -1380,16 +1465,18 @@ const Dashboard = () => {
         softwareForm.dateCreated === softwareEditSnapshot.dateCreated
       )
     : !softwareForm.name?.trim();
-  const placeHolderSubmitDisabled = placeHolderForm.editItem
-    ? !placeHolderForm.name?.trim() ||
-      !placeHolderEditSnapshot ||
+  const billboardSubmitDisabled = billboardForm.editItem
+    ? !billboardForm.name?.trim() ||
+      !billboardEditSnapshot ||
       (
-        placeHolderForm.name === placeHolderEditSnapshot.name &&
-        placeHolderForm.url === placeHolderEditSnapshot.url &&
-        placeHolderForm.description === placeHolderEditSnapshot.description &&
-        placeHolderForm.dateCreated === placeHolderEditSnapshot.dateCreated
+        billboardForm.name === billboardEditSnapshot.name &&
+        billboardForm.blurb === billboardEditSnapshot.blurb &&
+        billboardForm.url === billboardEditSnapshot.url &&
+        !billboardForm.file &&
+        billboardForm.massFiles.length === 0
       )
-    : !placeHolderForm.name?.trim();
+    : (!billboardForm.file && billboardForm.massFiles.length === 0) ||
+      !billboardForm.name?.trim();
 
   const photoRevertDisabled =
     !photoForm.editItem ||
@@ -1437,16 +1524,17 @@ const Dashboard = () => {
       softwareForm.description === softwareEditSnapshot.description &&
       softwareForm.dateCreated === softwareEditSnapshot.dateCreated);
 
-  const placeHolderRevertDisabled =
-    !placeHolderForm.editItem ||
-    !placeHolderEditSnapshot ||
-    (placeHolderForm.name === placeHolderEditSnapshot.name &&
-      placeHolderForm.url === placeHolderEditSnapshot.url &&
-      placeHolderForm.description === placeHolderEditSnapshot.description &&
-      placeHolderForm.dateCreated === placeHolderEditSnapshot.dateCreated);
+  const billboardRevertDisabled =
+    !billboardForm.editItem ||
+    !billboardEditSnapshot ||
+    (billboardForm.name === billboardEditSnapshot.name &&
+      billboardForm.blurb === billboardEditSnapshot.blurb &&
+      billboardForm.url === billboardEditSnapshot.url &&
+      !billboardForm.file &&
+      billboardForm.massFiles.length === 0);
 
   const dashboardLoading =
-    photographyLoading || softwareLoading || gamesLoading || placeHolderLoading;
+    photographyLoading || softwareLoading || gamesLoading || billboardLoading;
 
   if (dashboardLoading) {
     return (
@@ -1966,28 +2054,28 @@ const Dashboard = () => {
         </section>
 
         <section className="relative order-4 bg-black/60 border border-white/20  p-6">
-          {sectionBusy.placeHolder && (
+          {sectionBusy.billboard && (
             <div className="absolute inset-0 z-30 bg-black/80 flex flex-col items-center justify-center gap-3">
               <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-white" />
               <p className="text-white">Working...</p>
               <button
                 type="button"
-                onClick={() => requestSectionCancel("placeHolder")}
+                onClick={() => requestSectionCancel("billboard")}
                 className="app-btn app-btn-secondary"
               >
                 Cancel
               </button>
             </div>
           )}
-          <h2 className="text-3xl text-start font-semibold mb-4">Place Holder</h2>
+          <h2 className="text-3xl text-start font-semibold mb-4">Billboard</h2>
 
           <GenericEntryForm
-            section="placeHolder"
-            isEditing={Boolean(placeHolderForm.editItem)}
-            formValues={placeHolderForm}
-            onSubmit={handlePlaceHolderSubmit}
+            section="billboard"
+            isEditing={Boolean(billboardForm.editItem)}
+            formValues={billboardForm}
+            onSubmit={handleBillboardSubmit}
             onChange={(field, value) =>
-              setPlaceHolderForm((prev) => ({ ...prev, [field]: value }))
+              setBillboardForm((prev) => ({ ...prev, [field]: value }))
             }
             onCancelEdit={() => {
               resetSimpleForm(setPlaceHolderForm);

@@ -23,28 +23,19 @@ export const softwareSchema = z.object({
   detailImagePaths: z.array(z.string()).optional(),
 });
 
-export const gamesSchema = softwareSchema.extend({
-  url: z.string().optional(),
-  detailImages: z.array(z.string().url()).optional(),
-  detailImagePaths: z.array(z.string()).optional(),
-  hackPatchLink: z.string().url().optional(),
-  gameType: z.enum(["web games", "pc games", "hacks"]),
-  releasedStatus: z.enum(["released", "in development", "on hold", "cancelled", "prototype"]).optional(),
-  updated: z.string().optional(),
-  published: z.string().optional(),
-  credits: z.array(
-    z.object({
-      name: z.string(),
-      role: z.string(),
-    })
-  ).optional(),
-  textColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  borderColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  macLink: z.string().url().optional(),
-  iosLink: z.string().url().optional(),
-  androidLink: z.string().url().optional(),
-  windowsLink: z.string().url().optional(),
-  linuxLink: z.string().url().optional(),
-  steamLink: z.string().url().optional(),
-  romhackingLink: z.string().url().optional(),
+export const billboardSchema = z.object({
+  name: z.string(),
+  src: z.string().url(),
+  path: z.string().optional(),
+  blurb: z.string().optional(),
+  url: z.string().url().optional(),
+});
+
+export const gamesSchema = z.object({
+  name: z.string(),
+  src: z.string().url().optional(),
+  path: z.string().optional(),
+  gameType: z.string().optional(),
+  borderColor: z.string().optional(),
+  textColor: z.string().optional(),
 });

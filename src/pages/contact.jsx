@@ -1,3 +1,4 @@
+import phone from "../assets/phone.gif";
 
 
 const Contact = () => {
@@ -60,6 +61,10 @@ const Contact = () => {
                     </button>
                 </div>
             </form>
+
+            <p className="text-[#ff0000] text-xl font-bold text-center">Call my ass up</p>
+            <img src={phone} alt="Phone" className="w-50 h-auto mt-2 mx-auto" />
+
         </div>
     );
 };

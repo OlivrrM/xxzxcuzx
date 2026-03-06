@@ -153,7 +153,7 @@ const Photography = () => {
   };
 
   return (
-    <div className="p-4 mx-auto max-w-7xl">
+    <div className="p-4 mx-auto max-w-7xl overflow-x-hidden">
       <button
         type="button"
         onClick={handleRandomClick}
@@ -169,7 +169,7 @@ const Photography = () => {
       {loading && <p>Loading photographs…</p>}
       {error && <p className="text-red-600">Unable to load photographs.</p>}
 
-      <div className="mx-auto">
+      <div className="mx-auto m-10 p-6 overflow-x-hidden">
         <InfiniteScroll
           dataLength={displayedImages.length}
           next={fetchMoreData}
@@ -198,7 +198,7 @@ const Photography = () => {
                 }}
                 aria-label={`Open photo ${img.name || idx + 1}`}
               >
-                <div className="relative w-fit h-auto mx-auto">
+                <div className="relative h-auto mx-auto overflow-hidden">
                   <div
                     className="absolute z-0 overflow-hidden flex items-center justify-center"
                     style={{

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import { photographySchema, softwareSchema, gamesSchema } from "../schemas";
+import { photographySchema, softwareSchema, gamesSchema, billboardSchema } from "../schemas";
 
 // custom hook that retrieves a Firestore collection and optionally validates
 // each item with a Zod schema. The `name` argument should match one of the
@@ -19,6 +19,7 @@ export default function useImages(name = "photography") {
       photography: photographySchema,
       software: softwareSchema,
       games: gamesSchema,
+      billboard: billboardSchema,
     };
 
     async function load() {
