@@ -256,7 +256,7 @@ const GameDetail = () => {
             href={hackPatchLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#0000FF] font-bold"
+            className="text-[#0000FF] font-bold text-2xl"
           >
             Patch Now
           </a>
