@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import random from "../assets/random.png";
 import { useNavigate } from "react-router";
 import useImages from "../hooks/useImages";
 import Masonry from "react-masonry-css";
+import InfiniteScroll from "react-infinite-scroll-component";
 
 import frame11_0 from "../assets/Frames/1.1/frame0.png";
 import frame11_1 from "../assets/Frames/1.1/frame1.png";
@@ -94,6 +95,24 @@ const Photography = () => {
   const { data: images, loading, error } = useImages("photography");
   const [imageRatioByKey, setImageRatioByKey] = useState({});
   const [imageFlipByKey, setImageFlipByKey] = useState({});
+  const [displayedImages, setDisplayedImages] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    if (images.length > 0) {
+      setDisplayedImages(images.slice(0, 20));
+      setHasMore(images.length > 20);
+    }
+  }, [images]);
+
+  const fetchMoreData = () => {
+    if (displayedImages.length >= images.length) {
+      setHasMore(false);
+      return;
+    }
+    const nextBatch = images.slice(displayedImages.length, displayedImages.length + 20);
+    setDisplayedImages(prev => [...prev, ...nextBatch]);
+  };
 
   const handleImageLoad = (key) => (event) => {
     const loadedImage = event.currentTarget;
@@ -151,14 +170,20 @@ const Photography = () => {
       {error && <p className="text-red-600">Unable to load photographs.</p>}
 
       <div className="mx-auto">
-        <Masonry
-          breakpointCols={breakpointColumnsObj}
-          className="flex w-auto -ml-12"
-          columnClassName="pl-12"
+        <InfiniteScroll
+          dataLength={displayedImages.length}
+          next={fetchMoreData}
+          hasMore={hasMore}
+          loader={<h4>Loading...</h4>}
         >
-          {images.map((img, idx) => {
-            const key = img.id || idx;
-            const ratioKey = imageRatioByKey[key] || "1:1";
+          <Masonry
+            breakpointCols={breakpointColumnsObj}
+            className="flex w-auto -ml-12"
+            columnClassName="pl-12"
+          >
+            {displayedImages.map((img, idx) => {
+              const key = img.id || idx;
+              const ratioKey = imageRatioByKey[key] || "1:1";
             const frame = pickFrameForImage(ratioKey, img.name || img.id || idx);
             const shouldFlipFrame = imageFlipByKey[key] || false;
             const frameBorderPx = frame?.borderPx ?? 6;
@@ -188,6 +213,7 @@ const Photography = () => {
                       alt={img.name}
                       className="w-auto h-auto max-w-full max-h-full object-contain"
                       onLoad={handleImageLoad(key)}
+                      loading="lazy"
                     />
                   </div>
                   {frame?.src && (
@@ -203,7 +229,8 @@ const Photography = () => {
               </button>
             );
           })}
-        </Masonry>
+          </Masonry>
+        </InfiniteScroll>
       </div>
     </div>
   );

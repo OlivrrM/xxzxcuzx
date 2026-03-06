@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import ExifReader from "exifreader";
+import imageCompression from "browser-image-compression";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useAuth } from "../contexts/AuthContext";
 import useImages from "../hooks/useImages";
@@ -10,6 +11,12 @@ import { uploadFileToGitHub, deleteFileFromGitHub } from "../utils/github";
 import { db } from "../firebase";
 import GenericEntryForm from "../components/dashboard/GenericEntryForm";
 import ItemList from "../components/dashboard/ItemList";
+
+const compressAndUploadFile = async (file, path) => {
+  const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
+  const compressedFile = await imageCompression(file, options);
+  return await uploadFileToGitHub(compressedFile, path);
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -77,7 +84,12 @@ const Dashboard = () => {
     name: "",
     url: "",
     description: "",
-    dateCreated: "",
+    subtext1: "",
+    subtext2: "",
+    blurb: "",
+    detailFiles: [],
+    detailImages: [],
+    detailImagePaths: [],
   });
 
   const [gamesForm, setGamesForm] = useState({
@@ -371,6 +383,21 @@ const Dashboard = () => {
     setPhotoTransferDate("");
   };
 
+  const resetSoftwareForm = () => {
+    setSoftwareForm({
+      editItem: null,
+      name: "",
+      url: "",
+      description: "",
+      subtext1: "",
+      subtext2: "",
+      blurb: "",
+      detailFiles: [],
+      detailImages: [],
+      detailImagePaths: [],
+    });
+  };
+
   const resetSimpleForm = (setter) => {
     setter({
       editItem: null,
@@ -467,7 +494,7 @@ const Dashboard = () => {
     const uploaded = [];
     for (const [index, file] of files.entries()) {
       const path = `games/details/${Date.now()}_${index}_${file.name}`;
-      const src = await uploadFileToGitHub(file, path);
+      const src = await compressAndUploadFile(file, path);
       uploaded.push({ src, path });
     }
     return uploaded;
@@ -778,7 +805,7 @@ const Dashboard = () => {
             throwIfCancelled("photography");
             const meta = photoMassMeta[index] || {};
             const path = `photography/${Date.now()}_${file.name}`;
-            const src = await uploadFileToGitHub(file, path);
+            const src = await compressAndUploadFile(file, path);
             throwIfCancelled("photography");
             await addItem("photography", {
               name: meta.name || file.name,
@@ -797,7 +824,7 @@ const Dashboard = () => {
         throwIfCancelled("photography");
         setSectionStatus("photography", "Uploading to GitHub...");
         const path = `photography/${Date.now()}_${photoForm.file.name}`;
-        const src = await uploadFileToGitHub(photoForm.file, path);
+        const src = await compressAndUploadFile(photoForm.file, path);
         throwIfCancelled("photography");
         await addItem("photography", {
           name: photoForm.name || photoForm.file.name,
@@ -881,13 +908,143 @@ const Dashboard = () => {
     };
   };
 
-  const handleSoftwareSubmit = createSimpleSubmitHandler({
-    section: "software",
-    form: softwareForm,
-    setter: setSoftwareForm,
-    collection: "software",
-    reload: reloadSoftware,
-  });
+  const handleSoftwareSubmit = async (e) => {
+    e.preventDefault();
+    if (sectionBusy.software) return;
+    if (!softwareForm.file && softwareForm.massFiles.length === 0 && !softwareForm.editItem) {
+      return;
+    }
+
+    beginSectionWork("software", "Saving...");
+    try {
+      const runSoftwareEdit = async () => {
+        throwIfCancelled("software");
+        const updates = { name: softwareForm.name };
+        if (softwareForm.url) updates.url = softwareForm.url;
+        if (softwareForm.description) updates.description = softwareForm.description;
+        if (softwareForm.subtext1) updates.subtext1 = softwareForm.subtext1;
+        if (softwareForm.subtext2) updates.subtext2 = softwareForm.subtext2;
+        if (softwareForm.blurb) updates.blurb = softwareForm.blurb;
+
+        if (softwareForm.detailFiles.length > 0) {
+          setSectionStatus("software", "Uploading additional images...");
+          const uploadedDetails = await uploadGamesDetailImages(softwareForm.detailFiles);
+          const existingImages = Array.isArray(softwareForm.detailImages) ? softwareForm.detailImages : [];
+          const existingPaths = Array.isArray(softwareForm.detailImagePaths)
+            ? softwareForm.detailImagePaths
+            : [];
+
+          updates.detailImages = [...existingImages, ...uploadedDetails.map((entry) => entry.src)];
+          updates.detailImagePaths = [
+            ...existingPaths,
+            ...uploadedDetails.map((entry) => entry.path),
+          ];
+        }
+
+        if (softwareForm.file) {
+          setSectionStatus("software", "Uploading replacement image...");
+          const replacementPath = `software/${Date.now()}_${softwareForm.file.name}`;
+          const replacementSrc = await compressAndUploadFile(softwareForm.file, replacementPath);
+          throwIfCancelled("software");
+          updates.path = replacementPath;
+          updates.src = replacementSrc;
+
+          if (softwareForm.editItem?.path) {
+            try {
+              await deleteFileFromGitHub(softwareForm.editItem.path);
+            } catch (error) {
+              console.warn("Failed to delete old software image from GitHub", error);
+            }
+          }
+        }
+
+        await updateDoc(doc(db, "software", softwareForm.editItem.id), updates);
+        reloadSoftware();
+        setSectionStatus("software", "Update complete");
+        resetSoftwareForm();
+      };
+
+      const runSoftwareUpload = async () => {
+        if (softwareForm.massFiles.length > 0) {
+          for (const file of softwareForm.massFiles) {
+            throwIfCancelled("software");
+            const path = `software/${Date.now()}_${file.name}`;
+            const src = await compressAndUploadFile(file, path);
+            throwIfCancelled("software");
+            let uploadedDetailImages = [];
+            if (softwareForm.detailFiles.length > 0) {
+              setSectionStatus("software", "Uploading additional images...");
+              uploadedDetailImages = await uploadGamesDetailImages(softwareForm.detailFiles);
+              throwIfCancelled("software");
+            }
+            await addItem("software", {
+              name: file.name,
+              src,
+              path,
+              url: softwareForm.url,
+              description: softwareForm.description,
+              subtext1: softwareForm.subtext1,
+              subtext2: softwareForm.subtext2,
+              blurb: softwareForm.blurb,
+              ...(uploadedDetailImages.length > 0
+                ? {
+                    detailImages: uploadedDetailImages.map((entry) => entry.src),
+                    detailImagePaths: uploadedDetailImages.map((entry) => entry.path),
+                  }
+                : {}),
+            });
+          }
+          return;
+        }
+
+        if (!softwareForm.file) return;
+        throwIfCancelled("software");
+        setSectionStatus("software", "Uploading to GitHub...");
+        const path = `software/${Date.now()}_${softwareForm.file.name}`;
+        const src = await compressAndUploadFile(softwareForm.file, path);
+        throwIfCancelled("software");
+        let uploadedDetailImages = [];
+        if (softwareForm.detailFiles.length > 0) {
+          setSectionStatus("software", "Uploading additional images...");
+          uploadedDetailImages = await uploadGamesDetailImages(softwareForm.detailFiles);
+          throwIfCancelled("software");
+        }
+        await addItem("software", {
+          name: softwareForm.name || softwareForm.file.name,
+          src,
+          path,
+          url: softwareForm.url,
+          description: softwareForm.description,
+          subtext1: softwareForm.subtext1,
+          subtext2: softwareForm.subtext2,
+          blurb: softwareForm.blurb,
+          ...(uploadedDetailImages.length > 0
+            ? {
+                detailImages: uploadedDetailImages.map((entry) => entry.src),
+                detailImagePaths: uploadedDetailImages.map((entry) => entry.path),
+              }
+            : {}),
+        });
+      };
+
+      if (softwareForm.editItem) {
+        await runSoftwareEdit();
+        return;
+      }
+
+      await runSoftwareUpload();
+      throwIfCancelled("software");
+
+      reloadSoftware();
+      setSectionStatus("software", "Upload complete");
+      resetSoftwareForm();
+    } catch (error) {
+      console.error("Software submit error:", error);
+      setSectionStatus("software", `Error: ${error.message}`);
+    } finally {
+      endSectionWork("software");
+    }
+  };
 
   const handleGamesSubmit = async (e) => {
     e.preventDefault();
@@ -927,7 +1084,7 @@ const Dashboard = () => {
         if (gamesForm.file) {
           setSectionStatus("games", "Uploading replacement image...");
           const replacementPath = `games/${Date.now()}_${gamesForm.file.name}`;
-          const replacementSrc = await uploadFileToGitHub(gamesForm.file, replacementPath);
+          const replacementSrc = await compressAndUploadFile(gamesForm.file, replacementPath);
           throwIfCancelled("games");
           updates.path = replacementPath;
           updates.src = replacementSrc;
@@ -952,7 +1109,7 @@ const Dashboard = () => {
           for (const file of gamesForm.massFiles) {
             throwIfCancelled("games");
             const path = `games/${Date.now()}_${file.name}`;
-            const src = await uploadFileToGitHub(file, path);
+            const src = await compressAndUploadFile(file, path);
             throwIfCancelled("games");
             let uploadedDetailImages = [];
             if (isPcOrHackGameType(gamesForm.gameType) && gamesForm.detailFiles.length > 0) {
@@ -984,7 +1141,7 @@ const Dashboard = () => {
         throwIfCancelled("games");
         setSectionStatus("games", "Uploading to GitHub...");
         const path = `games/${Date.now()}_${gamesForm.file.name}`;
-        const src = await uploadFileToGitHub(gamesForm.file, path);
+        const src = await compressAndUploadFile(gamesForm.file, path);
         throwIfCancelled("games");
         let uploadedDetailImages = [];
         if (isPcOrHackGameType(gamesForm.gameType) && gamesForm.detailFiles.length > 0) {
@@ -1705,7 +1862,11 @@ const Dashboard = () => {
                   name: item.name || "",
                   url: item.url || "",
                   description: item.description || "",
-                  dateCreated: item.dateCreated || "",
+                  subtext1: item.subtext1 || "",
+                  subtext2: item.subtext2 || "",
+                  blurb: item.blurb || "",
+                  detailImages: item.detailImages || [],
+                  detailImagePaths: item.detailImagePaths || [],
                 };
                 setSoftwareEditSnapshot(snapshot);
                 setSoftwareForm({ editItem: item, ...snapshot });

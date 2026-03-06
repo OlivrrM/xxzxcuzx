@@ -25,16 +25,17 @@ const Login = () => {
   };
 
   return (
-    <div className="p-4 max-w-md mx-auto text-white">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="flex flex-1 items-center justify-center p-4">
+      <div className="border border-gray-600 p-8 shadow-lg min-w-[600px] text-white">
+        <h1 className="text-2xl font-bold mb-4">Login</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border px-3 py-2 rounded bg-white text-black"
+            className="w-full"
             required
           />
         </div>
@@ -44,7 +45,7 @@ const Login = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border px-3 py-2 rounded bg-white text-black"
+            className="w-full"
             required
           />
         </div>
@@ -52,11 +53,11 @@ const Login = () => {
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           {loading ? "Signing in…" : "Sign In"}
         </button>
       </form>
+      </div>
     </div>
   );
 };

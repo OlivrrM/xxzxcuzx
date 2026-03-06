@@ -1,11 +1,10 @@
-
+import welcome from "../assets/wlecome.gif";
 
 const Home = () => {
 
     return (
-        <div>
-            <h2>Home Page</h2>
-            <p>Welcome to the home page of xxzxcuzx.com!</p>
+        <div className="flex-1 p-6 flex items-start justify-center">
+            <img src={welcome} alt="Welcome" className="mt-4" />
         </div>
     );
 }

@@ -43,8 +43,8 @@ const Nav = () => {
         {showFire && (
           <img src={coolFire} alt="fire" className="hidden min-[1201px]:flex h-full w-full absolute z-[-2] opacity-70" />        
         )}
-        <div className="p-[10px] flex">
-          <div className="flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:hidden">
+        <div className="p-[10px] flex flex-col min-[1201px]:flex-row">
+          <div className="grid grid-cols-2 gap-4 order-2 mt-2 pb-2 min-[600px]:flex min-[600px]:flex-wrap min-[600px]:justify-center min-[600px]:gap-8 min-[1201px]:hidden">
             <Link to="/software">
               <p className={style}>Software</p>
             </Link>
@@ -57,6 +57,7 @@ const Nav = () => {
             <Link to="/contact">
               <p className={style}>Contact</p>
             </Link>
+            <hr className="col-span-2 min-[600px]:hidden border-red-500 my-1" />
           </div>
 
           <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:order-1">
@@ -85,13 +86,13 @@ const Nav = () => {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="flex items-end relative h-[80px] bg-transparent p-0 shadow-none order-1 min-[1201px]:order-2 mr-4 ml-4"
+            className="flex items-end justify-center relative h-[60px] min-[768px]:h-[80px] bg-transparent p-0 shadow-none order-1 min-[1201px]:order-2 mr-4 ml-4"
             aria-label="Go to home"
             onMouseEnter={() => setShowFire(true)}
             onMouseLeave={() => setShowFire(false)}
           >
-            <img src={coolTitle} alt="XXZCUZX" className="h-full" />
-            <img src={com} alt=".com" className="h-[50%] mb-1" />
+            <img src={coolTitle} alt="XXZCUZX" className="h-full flex-shrink-0" />
+            <img src={com} alt=".com" className="h-[50%] mb-1 flex-shrink-0" />
           </button>
 
           <div className="hidden relative min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-3 min-[1201px]:order-3">

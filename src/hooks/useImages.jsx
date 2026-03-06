@@ -22,6 +22,20 @@ export default function useImages(name = "photography") {
     };
 
     async function load() {
+      const cacheKey = `images_${name}`;
+      const cached = localStorage.getItem(cacheKey);
+      const now = Date.now();
+      if (cached) {
+        const { data: cachedData, timestamp } = JSON.parse(cached);
+        if (now - timestamp < 3600000) { // 1 hour
+          if (!cancelled) {
+            setData(cachedData);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
       try {
         const colRef = collection(db, name);
         const snapshot = await getDocs(colRef);
@@ -42,6 +56,7 @@ export default function useImages(name = "photography") {
           });
 
         const schema = schemaMap[name];
+        let finalData;
         if (schema) {
           // parse will throw if any document doesn't conform; schema doesn't
           // know about `id` so strip it before validating and then reattach.
@@ -50,10 +65,14 @@ export default function useImages(name = "photography") {
             const validated = schema.parse(rest);
             return { id, ...validated };
           });
+          finalData = parsed;
           if (!cancelled) setData(parsed);
         } else {
+          finalData = items;
           if (!cancelled) setData(items);
         }
+        // Cache the data
+        localStorage.setItem(cacheKey, JSON.stringify({ data: finalData, timestamp: now }));
       } catch (err) {
         console.error(`Failed to fetch ${name} collection`, err);
         if (!cancelled) setError(err);

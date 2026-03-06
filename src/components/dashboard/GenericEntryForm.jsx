@@ -25,7 +25,8 @@ const GenericEntryForm = ({
 }) => {
   const isPhotography = section === "photography";
   const isGames = section === "games";
-  const isMediaUploadSection = section === "photography" || section === "games";
+  const isSoftware = section === "software";
+  const isMediaUploadSection = section === "photography" || section === "games" || section === "software";
   const normalizedGameColor = /^#[0-9A-Fa-f]{6}$/.test(formValues.textColor || "")
     ? formValues.textColor
     : "#ff0000";
@@ -107,6 +108,129 @@ const GenericEntryForm = ({
             onChange={(e) => onChange("url", e.target.value)}
             className="app-input w-full"
           />
+        </div>
+      )}
+
+      {isSoftware && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-description`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Description
+          </label>
+          <textarea
+            id={`${idPrefix}-description`}
+            value={formValues.description || ""}
+            onChange={(e) => onChange("description", e.target.value)}
+            className="app-input w-full min-h-24"
+          />
+        </div>
+      )}
+
+      {isSoftware && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-subtext1`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Subtext 1
+          </label>
+          <input
+            id={`${idPrefix}-subtext1`}
+            type="text"
+            value={formValues.subtext1 || ""}
+            onChange={(e) => onChange("subtext1", e.target.value)}
+            className="app-input w-full"
+          />
+        </div>
+      )}
+
+      {isSoftware && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-subtext2`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Subtext 2
+          </label>
+          <input
+            id={`${idPrefix}-subtext2`}
+            type="text"
+            value={formValues.subtext2 || ""}
+            onChange={(e) => onChange("subtext2", e.target.value)}
+            className="app-input w-full"
+          />
+        </div>
+      )}
+
+      {isSoftware && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-blurb`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Blurb
+          </label>
+          <textarea
+            id={`${idPrefix}-blurb`}
+            value={formValues.blurb || ""}
+            onChange={(e) => onChange("blurb", e.target.value)}
+            className="app-input w-full min-h-24"
+          />
+        </div>
+      )}
+
+      {isSoftware && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-detail-files`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Additional images (optional)
+          </label>
+          <input
+            id={`${idPrefix}-detail-files`}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => onChange("detailFiles", Array.from(e.target.files || []))}
+            className="app-input w-full block"
+          />
+          {Array.isArray(formValues.detailFiles) && formValues.detailFiles.length > 0 && (
+            <p className="text-sm text-white/80 mt-1">
+              {formValues.detailFiles.length} image
+              {formValues.detailFiles.length === 1 ? "" : "s"} selected
+            </p>
+          )}
+          {Array.isArray(formValues.detailImages) && formValues.detailImages.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-medium">Existing images:</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formValues.detailImages.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img
+                      src={img}
+                      alt={`Existing ${idx + 1}`}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newImages = formValues.detailImages.filter((_, i) => i !== idx);
+                        const newPaths = formValues.detailImagePaths.filter((_, i) => i !== idx);
+                        onChange("detailImages", newImages);
+                        onChange("detailImagePaths", newPaths);
+                      }}
+                      className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

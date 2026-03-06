@@ -27,6 +27,9 @@ const Software = () => {
           <li key={app.id} className="border p-3 rounded">
             <h2 className="font-semibold">{app.name}</h2>
             {app.description && <p>{app.description}</p>}
+            {app.subtext1 && <p className="text-sm text-gray-600">{app.subtext1}</p>}
+            {app.subtext2 && <p className="text-sm text-gray-600">{app.subtext2}</p>}
+            {app.blurb && <p className="italic">{app.blurb}</p>}
             {app.url && (
               <a
                 href={app.url}
@@ -36,6 +39,21 @@ const Software = () => {
               >
                 Visit project
               </a>
+            )}
+            {app.detailImages && app.detailImages.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-medium">Images:</h3>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {app.detailImages.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={`Image ${idx + 1}`}
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                  ))}
+                </div>
+              </div>
             )}
           </li>
         ))}
