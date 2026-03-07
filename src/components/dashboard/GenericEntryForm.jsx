@@ -26,7 +26,7 @@ const GenericEntryForm = ({
   const isPhotography = section === "photography";
   const isGames = section === "games";
   const isSoftware = section === "software";
-  const isMediaUploadSection = section === "photography" || section === "games" || section === "software";
+  const isMediaUploadSection = section === "photography" || section === "games" || section === "software" || section === "billboard";
   const normalizedGameColor = /^#[0-9A-Fa-f]{6}$/.test(formValues.textColor || "")
     ? formValues.textColor
     : "#ff0000";
@@ -71,7 +71,7 @@ const GenericEntryForm = ({
             onChange={onFileSelect}
             className="app-input w-full block"
             multiple={!isEditing}
-            disabled={isPhotography && isEditing}
+            disabled={isPhotography && isEditing || section === "billboard" && isEditing}
           />
         </div>
       )}
@@ -111,23 +111,22 @@ const GenericEntryForm = ({
         </div>
       )}
 
-      {isSoftware && (
+      {section === "billboard" && (
         <div>
           <label
-            htmlFor={`${idPrefix}-description`}
+            htmlFor={`${idPrefix}-blurb`}
             className="block text-start text-sm font-medium mb-1"
           >
-            Description
+            Blurb
           </label>
           <textarea
-            id={`${idPrefix}-description`}
-            value={formValues.description || ""}
-            onChange={(e) => onChange("description", e.target.value)}
+            id={`${idPrefix}-blurb`}
+            value={formValues.blurb || ""}
+            onChange={(e) => onChange("blurb", e.target.value)}
             className="app-input w-full min-h-24"
           />
         </div>
       )}
-
       {isSoftware && (
         <div>
           <label
@@ -604,7 +603,7 @@ const GenericEntryForm = ({
               onChange={(e) => onChange("dateCreated", e.target.value)}
               className={`app-input ${isMediaUploadSection ? "flex-1" : "w-full"}`}
             />
-            {isMediaUploadSection && (
+            {section === "photography" && (
               <>
                 <button
                   type="button"
@@ -664,21 +663,23 @@ const GenericEntryForm = ({
         </>
       )}
 
-      <div>
-        <label
-          htmlFor={`${idPrefix}-description`}
-          className="block text-start text-sm font-medium mb-1"
-        >
-          Description (optional)
-        </label>
-        <textarea
-          id={`${idPrefix}-description`}
-          value={formValues.description}
-          onChange={(e) => onChange("description", e.target.value)}
-          className="app-input w-full min-h-24"
-          disabled={disableDescription}
-        />
-      </div>
+      {(isSoftware || isPhotography) && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-description`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Description (optional)
+          </label>
+          <textarea
+            id={`${idPrefix}-description`}
+            value={formValues.description}
+            onChange={(e) => onChange("description", e.target.value)}
+            className="app-input w-full min-h-24"
+            disabled={disableDescription}
+          />
+        </div>
+      )}
 
       <div className="flex gap-2 items-center flex-wrap">
         {isEditing && (
@@ -718,12 +719,13 @@ const GenericEntryForm = ({
 };
 
 GenericEntryForm.propTypes = {
-  section: PropTypes.oneOf(["photography", "software", "games", "placeHolder"]).isRequired,
+  section: PropTypes.oneOf(["photography", "software", "games", "billboard", "placeHolder"]).isRequired,
   isEditing: PropTypes.bool.isRequired,
   formValues: PropTypes.shape({
     name: PropTypes.string,
     url: PropTypes.string,
     description: PropTypes.string,
+    blurb: PropTypes.string,
     dateCreated: PropTypes.string,
     cameraModel: PropTypes.string,
     location: PropTypes.string,

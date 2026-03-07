@@ -4,12 +4,14 @@ import {
   photographySchema,
   softwareSchema,
   gamesSchema,
+  billboardSchema,
 } from '../schemas';
 
 const schemaMap = {
   photography: photographySchema,
   software: softwareSchema,
   games: gamesSchema,
+  billboard: billboardSchema,
 };
 
 /**

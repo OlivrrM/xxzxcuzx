@@ -24,15 +24,18 @@ export default function useImages(name = "photography") {
 
     async function load() {
       const cacheKey = `images_${name}`;
-      const cached = localStorage.getItem(cacheKey);
       const now = Date.now();
-      if (cached) {
-        const { data: cachedData, timestamp } = JSON.parse(cached);
-        if (now - timestamp < 3600000) { // 1 hour
-          if (!cancelled) {
-            setData(cachedData);
-            setLoading(false);
-            return;
+      const shouldUseCache = name !== "billboard"; // Don't cache billboard for immediate updates
+      if (shouldUseCache) {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const { data: cachedData, timestamp } = JSON.parse(cached);
+          if (now - timestamp < 3600000) { // 1 hour
+            if (!cancelled) {
+              setData(cachedData);
+              setLoading(false);
+              return;
+            }
           }
         }
       }
@@ -73,7 +76,9 @@ export default function useImages(name = "photography") {
           if (!cancelled) setData(items);
         }
         // Cache the data
-        localStorage.setItem(cacheKey, JSON.stringify({ data: finalData, timestamp: now }));
+        if (shouldUseCache) {
+          localStorage.setItem(cacheKey, JSON.stringify({ data: finalData, timestamp: now }));
+        }
       } catch (err) {
         console.error(`Failed to fetch ${name} collection`, err);
         if (!cancelled) setError(err);

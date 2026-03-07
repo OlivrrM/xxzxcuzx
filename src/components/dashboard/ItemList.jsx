@@ -24,7 +24,7 @@ const ItemList = ({
   };
   const listTitle = sectionTitles[section] || "Items";
 
-  if (section === "photography" || section === "games") {
+  if (section === "photography" || section === "games" || section === "billboard" || section === "software") {
     return (
       <div className={containerClassName}>
         <h3 className="text-xl text-start font-semibold mb-3">{listTitle}</h3>

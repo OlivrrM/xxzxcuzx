@@ -80,10 +80,12 @@ const Dashboard = () => {
   });
 
   const [softwareForm, setSoftwareForm] = useState({
+    file: null,
+    massFiles: [],
     editItem: null,
     name: "",
     url: "",
-    description: "",
+    dateCreated: "",
     subtext1: "",
     subtext2: "",
     blurb: "",
@@ -130,6 +132,7 @@ const Dashboard = () => {
     name: "",
     blurb: "",
     url: "",
+    dateCreated: "",
   });
 
   useEffect(() => {
@@ -176,6 +179,8 @@ const Dashboard = () => {
   const [photoMassMeta, setPhotoMassMeta] = useState([]);
   const [photoBulkDateSource, setPhotoBulkDateSource] = useState("created");
   const [photoTransferDate, setPhotoTransferDate] = useState("");
+
+  const resetSimpleForm = (setter) => setter({ editItem: null, name: "", url: "", description: "", dateCreated: "" });
 
   const normalizeExifDate = (value) => {
     if (!value) return "";
@@ -386,10 +391,12 @@ const Dashboard = () => {
 
   const resetSoftwareForm = () => {
     setSoftwareForm({
+      file: null,
+      massFiles: [],
       editItem: null,
       name: "",
       url: "",
-      description: "",
+      dateCreated: "",
       subtext1: "",
       subtext2: "",
       blurb: "",
@@ -407,6 +414,7 @@ const Dashboard = () => {
       name: "",
       blurb: "",
       url: "",
+      dateCreated: "",
     });
   };
 
@@ -778,6 +786,25 @@ const Dashboard = () => {
     }));
   };
 
+  const handleBillboardFileSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (files.length === 1) {
+      setBillboardForm((prev) => ({
+        ...prev,
+        file: files[0],
+        massFiles: [],
+      }));
+    } else {
+      setBillboardForm((prev) => ({
+        ...prev,
+        file: null,
+        massFiles: files,
+      }));
+    }
+  };
+
   const handlePhotographySubmit = async (e) => {
     e.preventDefault();
     if (sectionBusy.photography) return;
@@ -887,7 +914,7 @@ const Dashboard = () => {
           await updateDoc(doc(db, collection, form.editItem.id), payload);
           setSectionStatus(section, "Update complete");
           if (collection === "software") setSoftwareEditSnapshot(null);
-          if (collection === "placeHolder") setPlaceHolderEditSnapshot(null);
+          if (collection === "billboard") setBillboardEditSnapshot(null);
         } else {
           throwIfCancelled(section);
           await addItem(collection, payload);
@@ -913,7 +940,8 @@ const Dashboard = () => {
   const handleSoftwareSubmit = async (e) => {
     e.preventDefault();
     if (sectionBusy.software) return;
-    if (!softwareForm.file && softwareForm.massFiles.length === 0 && !softwareForm.editItem) {
+    if (!softwareForm.file && (softwareForm.massFiles?.length ?? 0) === 0 && !softwareForm.editItem) {
+      setSectionStatus("software", "No file selected — choose a file or use mass upload.");
       return;
     }
 
@@ -924,11 +952,12 @@ const Dashboard = () => {
         const updates = { name: softwareForm.name };
         if (softwareForm.url) updates.url = softwareForm.url;
         if (softwareForm.description) updates.description = softwareForm.description;
+        if (softwareForm.dateCreated) updates.dateCreated = softwareForm.dateCreated;
         if (softwareForm.subtext1) updates.subtext1 = softwareForm.subtext1;
         if (softwareForm.subtext2) updates.subtext2 = softwareForm.subtext2;
         if (softwareForm.blurb) updates.blurb = softwareForm.blurb;
 
-        if (softwareForm.detailFiles.length > 0) {
+        if ((softwareForm.detailFiles?.length ?? 0) > 0) {
           setSectionStatus("software", "Uploading additional images...");
           const uploadedDetails = await uploadGamesDetailImages(softwareForm.detailFiles);
           const existingImages = Array.isArray(softwareForm.detailImages) ? softwareForm.detailImages : [];
@@ -967,14 +996,14 @@ const Dashboard = () => {
       };
 
       const runSoftwareUpload = async () => {
-        if (softwareForm.massFiles.length > 0) {
-          for (const file of softwareForm.massFiles) {
+        if ((softwareForm.massFiles?.length ?? 0) > 0) {
+          for (const file of (softwareForm.massFiles || [])) {
             throwIfCancelled("software");
             const path = `software/${Date.now()}_${file.name}`;
             const src = await compressAndUploadFile(file, path);
             throwIfCancelled("software");
             let uploadedDetailImages = [];
-            if (softwareForm.detailFiles.length > 0) {
+            if ((softwareForm.detailFiles?.length ?? 0) > 0) {
               setSectionStatus("software", "Uploading additional images...");
               uploadedDetailImages = await uploadGamesDetailImages(softwareForm.detailFiles);
               throwIfCancelled("software");
@@ -985,6 +1014,7 @@ const Dashboard = () => {
               path,
               url: softwareForm.url,
               description: softwareForm.description,
+              dateCreated: softwareForm.dateCreated,
               subtext1: softwareForm.subtext1,
               subtext2: softwareForm.subtext2,
               blurb: softwareForm.blurb,
@@ -999,14 +1029,17 @@ const Dashboard = () => {
           return;
         }
 
-        if (!softwareForm.file) return;
+        if (!softwareForm.file) {
+          setSectionStatus("software", "No file selected for upload.");
+          return;
+        }
         throwIfCancelled("software");
         setSectionStatus("software", "Uploading to GitHub...");
         const path = `software/${Date.now()}_${softwareForm.file.name}`;
         const src = await compressAndUploadFile(softwareForm.file, path);
         throwIfCancelled("software");
         let uploadedDetailImages = [];
-        if (softwareForm.detailFiles.length > 0) {
+        if ((softwareForm.detailFiles?.length ?? 0) > 0) {
           setSectionStatus("software", "Uploading additional images...");
           uploadedDetailImages = await uploadGamesDetailImages(softwareForm.detailFiles);
           throwIfCancelled("software");
@@ -1017,6 +1050,7 @@ const Dashboard = () => {
           path,
           url: softwareForm.url,
           description: softwareForm.description,
+          dateCreated: softwareForm.dateCreated,
           subtext1: softwareForm.subtext1,
           subtext2: softwareForm.subtext2,
           blurb: softwareForm.blurb,
@@ -1044,7 +1078,7 @@ const Dashboard = () => {
       console.error("Software submit error:", error);
       setSectionStatus("software", `Error: ${error.message}`);
     } finally {
-      endSectionWork("software");
+      finishSectionWork("software");
     }
   };
 
@@ -1208,6 +1242,7 @@ const Dashboard = () => {
         const updates = { name: billboardForm.name };
         if (billboardForm.blurb) updates.blurb = billboardForm.blurb;
         if (billboardForm.url) updates.url = billboardForm.url;
+        if (billboardForm.dateCreated) updates.dateCreated = billboardForm.dateCreated;
 
         if (billboardForm.file) {
           setSectionStatus("billboard", "Uploading replacement image...");
@@ -1245,6 +1280,7 @@ const Dashboard = () => {
               path,
               blurb: billboardForm.blurb,
               url: billboardForm.url,
+              dateCreated: billboardForm.dateCreated,
             });
           }
           return;
@@ -1262,6 +1298,7 @@ const Dashboard = () => {
           path,
           blurb: billboardForm.blurb,
           url: billboardForm.url,
+          dateCreated: billboardForm.dateCreated,
         });
       };
 
@@ -1280,7 +1317,7 @@ const Dashboard = () => {
       console.error("Billboard submit error:", error);
       setSectionStatus("billboard", `Error: ${error.message}`);
     } finally {
-      endSectionWork("billboard");
+      finishSectionWork("billboard");
     }
   };
 
@@ -1333,7 +1370,7 @@ const Dashboard = () => {
       if (collection === "photography") reloadPhotography();
       if (collection === "software") reloadSoftware();
       if (collection === "games") reloadGames();
-      if (collection === "placeHolder") reloadPlaceHolder();
+      if (collection === "billboard") reloadBillboard();
 
       setSectionStatus(collection, "Deleted");
     } catch (error) {
@@ -1393,7 +1430,6 @@ const Dashboard = () => {
     !billboardForm.file &&
     billboardForm.massFiles.length === 0 &&
     !billboardForm.name &&
-    !billboardForm.blurb &&
     !billboardForm.url;
 
   let photoSubmitDisabled;
@@ -1472,6 +1508,7 @@ const Dashboard = () => {
         billboardForm.name === billboardEditSnapshot.name &&
         billboardForm.blurb === billboardEditSnapshot.blurb &&
         billboardForm.url === billboardEditSnapshot.url &&
+        billboardForm.dateCreated === billboardEditSnapshot.dateCreated &&
         !billboardForm.file &&
         billboardForm.massFiles.length === 0
       )
@@ -1530,6 +1567,7 @@ const Dashboard = () => {
     (billboardForm.name === billboardEditSnapshot.name &&
       billboardForm.blurb === billboardEditSnapshot.blurb &&
       billboardForm.url === billboardEditSnapshot.url &&
+      billboardForm.dateCreated === billboardEditSnapshot.dateCreated &&
       !billboardForm.file &&
       billboardForm.massFiles.length === 0);
 
@@ -1930,7 +1968,7 @@ const Dashboard = () => {
               setSoftwareForm((prev) => ({ ...prev, [field]: value }))
             }
             onCancelEdit={() => {
-              resetSimpleForm(setSoftwareForm);
+              resetSoftwareForm();
               setSoftwareEditSnapshot(null);
             }}
             onRevert={() => revertSimpleForm(setSoftwareForm, softwareEditSnapshot)}
@@ -1950,6 +1988,7 @@ const Dashboard = () => {
                   name: item.name || "",
                   url: item.url || "",
                   description: item.description || "",
+                  dateCreated: item.dateCreated || "",
                   subtext1: item.subtext1 || "",
                   subtext2: item.subtext2 || "",
                   blurb: item.blurb || "",
@@ -1957,7 +1996,7 @@ const Dashboard = () => {
                   detailImagePaths: item.detailImagePaths || [],
                 };
                 setSoftwareEditSnapshot(snapshot);
-                setSoftwareForm({ editItem: item, ...snapshot });
+                setSoftwareForm((prev) => ({ ...prev, editItem: item, file: null, massFiles: [], ...snapshot }));
               }
             }
             onDelete={(item) => handleDelete("software", item)}
@@ -2077,41 +2116,42 @@ const Dashboard = () => {
             onChange={(field, value) =>
               setBillboardForm((prev) => ({ ...prev, [field]: value }))
             }
+            onFileSelect={handleBillboardFileSelect}
             onCancelEdit={() => {
-              resetSimpleForm(setPlaceHolderForm);
-              setPlaceHolderEditSnapshot(null);
+              resetBillboardForm();
+              setBillboardEditSnapshot(null);
             }}
-            onRevert={() => revertSimpleForm(setPlaceHolderForm, placeHolderEditSnapshot)}
-            onClear={() => clearSimpleFormFields(setPlaceHolderForm)}
-            submitDisabled={placeHolderSubmitDisabled}
-            clearDisabled={placeHolderClearDisabled}
-            revertDisabled={placeHolderRevertDisabled}
+            onRevert={() => revertSimpleForm(setBillboardForm, billboardEditSnapshot)}
+            onClear={() => clearSimpleFormFields(setBillboardForm)}
+            submitDisabled={billboardSubmitDisabled}
+            clearDisabled={billboardClearDisabled}
+            revertDisabled={billboardRevertDisabled}
           />
 
           <ItemList
-            section="placeHolder"
-            items={placeHolderItems}
-            loading={placeHolderLoading}
+            section="billboard"
+            items={billboardItems}
+            loading={billboardLoading}
             onEdit={(item) =>
               {
                 const snapshot = {
                   name: item.name || "",
+                  blurb: item.blurb || "",
                   url: item.url || "",
-                  description: item.description || "",
                   dateCreated: item.dateCreated || "",
                 };
-                setPlaceHolderEditSnapshot(snapshot);
-                setPlaceHolderForm({ editItem: item, ...snapshot });
+                setBillboardEditSnapshot(snapshot);
+                setBillboardForm(prev => ({ ...prev, editItem: item, ...snapshot }));
               }
             }
-            onDelete={(item) => handleDelete("placeHolder", item)}
+            onDelete={(item) => handleDelete("billboard", item)}
           />
 
-          {status.placeHolder && (
-            <p className="mt-3 text-sm text-green-300">{status.placeHolder}</p>
+          {status.billboard && (
+            <p className="mt-3 text-sm text-green-300">{status.billboard}</p>
           )}
-          {placeHolderError && (
-            <p className="mt-2 text-red-400">{placeHolderError.message}</p>
+          {billboardError && (
+            <p className="mt-2 text-red-400">{billboardError.message}</p>
           )}
         </section>
       </div>

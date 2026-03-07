@@ -28,7 +28,8 @@ export const billboardSchema = z.object({
   src: z.string().url(),
   path: z.string().optional(),
   blurb: z.string().optional(),
-  url: z.string().url().optional(),
+  url: z.string().optional(),
+  dateCreated: z.string().optional(),
 });
 
 export const gamesSchema = z.object({

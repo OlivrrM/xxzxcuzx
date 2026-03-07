@@ -178,8 +178,8 @@ const Photography = () => {
         >
           <Masonry
             breakpointCols={breakpointColumnsObj}
-            className="flex w-auto -ml-12"
-            columnClassName="pl-12"
+            className="flex w-auto -ml-2 overflow-x-hidden"
+            columnClassName="pl-10"
           >
             {displayedImages.map((img, idx) => {
               const key = img.id || idx;
@@ -198,7 +198,7 @@ const Photography = () => {
                 }}
                 aria-label={`Open photo ${img.name || idx + 1}`}
               >
-                <div className="relative h-auto mx-auto overflow-hidden">
+                <div className="relative h-auto mx-auto">
                   <div
                     className="absolute z-0 overflow-hidden flex items-center justify-center"
                     style={{
@@ -221,7 +221,7 @@ const Photography = () => {
                       src={frame.src}
                       alt=""
                       aria-hidden="true"
-                      className="relative scale-[1.1] z-10 w-auto h-auto max-w-full object-contain pointer-events-none"
+                      className="relative scale-[1.05] z-10 w-auto h-auto max-w-full object-contain pointer-events-none"
                       style={shouldFlipFrame ? { transform: "scaleX(-1)" } : undefined}
                     />
                   )}
