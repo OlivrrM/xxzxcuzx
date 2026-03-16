@@ -73,21 +73,25 @@ const Software = () => {
                 </div>
 
                 <div className={`flex w-full ${isReversed ? "flex-row-reverse" : "flex-row"} items-center gap-2 mt-4`}>
-                  {(() => {
-                    const downloadHref = app.downloadLink || app.url;
-                    if (!downloadHref) return null;
-                    return (
-                      <a
-                        href={downloadHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <img src={floppyGif} alt="Download" className="w-10 h-auto" />
-                        <span className="text-blue-400 underline">Download</span>
-                      </a>
-                    );
-                  })()}
+                  {app.downloadLink && (
+                    <a
+                      href={app.downloadLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img src={floppyGif} alt="Floppy disk" className="w-10 h-auto" />
+                    </a>
+                  )}
+                  {app.url && (
+                    <a
+                      href={app.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 mx-auto underline"
+                    >
+                      Visit project
+                    </a>
+                  )}
                 </div>
               </div>
             </li>

@@ -18,24 +18,24 @@ const Home = () => {
         return `hsl(${hue}, 65%, 55%)`;
     };
 
-    useEffect(() => {
+    const loadCount = async () => {
         const counterDoc = doc(db, "counters", "homeClicks");
 
-        const loadCount = async () => {
-            try {
-                const snap = await getDoc(counterDoc);
-                if (!snap.exists()) {
-                    await setDoc(counterDoc, { count: 0 });
-                    setClickCount(0);
-                } else {
-                    setClickCount(snap.data()?.count ?? 0);
-                }
-            } catch (err) {
-                console.error("Failed to load home click count", err);
-                setCounterError("Failed to load counter");
+        try {
+            const snap = await getDoc(counterDoc);
+            if (!snap.exists()) {
+                await setDoc(counterDoc, { count: 0 });
+                setClickCount(0);
+            } else {
+                setClickCount(snap.data()?.count ?? 0);
             }
-        };
+        } catch (err) {
+            console.error("Failed to load home click count", err);
+            setCounterError("Failed to load counter");
+        }
+    };
 
+    useEffect(() => {
         loadCount();
     }, []);
 
@@ -46,7 +46,7 @@ const Home = () => {
 
         try {
             await updateDoc(counterDoc, { count: increment(1) });
-            setClickCount((prev) => (typeof prev === "number" ? prev + 1 : 1));
+            await loadCount();
         } catch (err) {
             console.error("Failed to increment count", err);
             setCounterError("Failed to increment count");
