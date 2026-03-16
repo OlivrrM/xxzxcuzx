@@ -803,6 +803,7 @@ const Dashboard = () => {
         throwIfCancelled("software");
         const updates = { name: softwareForm.name };
         if (softwareForm.url) updates.url = softwareForm.url;
+        if (softwareForm.downloadLink) updates.downloadLink = softwareForm.downloadLink;
         if (softwareForm.description) updates.description = softwareForm.description;
         if (softwareForm.dateCreated) updates.dateCreated = softwareForm.dateCreated;
         if (softwareForm.subtext1) updates.subtext1 = softwareForm.subtext1;
@@ -865,6 +866,7 @@ const Dashboard = () => {
               src,
               path,
               url: softwareForm.url,
+              downloadLink: softwareForm.downloadLink,
               description: softwareForm.description,
               dateCreated: softwareForm.dateCreated,
               subtext1: softwareForm.subtext1,
@@ -901,6 +903,7 @@ const Dashboard = () => {
           src,
           path,
           url: softwareForm.url,
+          downloadLink: softwareForm.downloadLink,
           description: softwareForm.description,
           dateCreated: softwareForm.dateCreated,
           subtext1: softwareForm.subtext1,
@@ -1815,7 +1818,7 @@ const Dashboard = () => {
             onRevert={() => revertSimpleForm(setSoftwareForm, softwareEditSnapshot)}
             onClear={() => clearSimpleFormFields(setSoftwareForm)}
             onFileSelect={handleSoftwareFileSelect}
-            submitDisabled={softwareSubmitDisabled}
+            submitDisabled={false}
             clearDisabled={softwareClearDisabled}
             revertDisabled={softwareRevertDisabled}
           />
