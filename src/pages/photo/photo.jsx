@@ -3,6 +3,7 @@ import useImages from "../../hooks/useImages";
 import { useNavigate, useParams } from "react-router";
 import arrow from "../../assets/FreeVector-3D-Arrow-Vector-Graphics.png"
 import PixiImageGlow from "../../components/PixiImageGlow";
+import kitten from "../../assets/kitten.gif"
 
 const IMAGE_BORDER_BLUR_PX = 0;
 const IMAGE_GLOW_STRENGTH = 0;
@@ -18,6 +19,8 @@ const Photo = () => {
   const maxIndex = resolvedImages.length - 1;
   const canGoPrevious = idx > 0;
   const canGoNext = idx < maxIndex;
+
+  const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   useEffect(() => {
     if (!image) return;
@@ -81,13 +84,24 @@ const Photo = () => {
     <div className="p-4 max-w-5xl mx-auto flex flex-col items-center text-center">
       <h1 className="text-2xl font-bold mb-4 italic">{image.name}</h1>
 
-      <PixiImageGlow
-        src={image.src}
-        alt={image.name}
-        borderPx={IMAGE_BORDER_BLUR_PX}
-        blurStrength={IMAGE_GLOW_STRENGTH}
-        className="w-full max-w-3xl"
-      />
+      <div className="relative">
+
+        <PixiImageGlow
+          src={image.src}
+          alt={image.name}
+          borderPx={IMAGE_BORDER_BLUR_PX}
+          blurStrength={IMAGE_GLOW_STRENGTH}
+          className="w-full max-w-3xl"
+        />
+
+        {randomInt(1, 10) == 5 && (
+          <img
+            src={kitten}
+            alt="Kitten"
+            className="left-[-50px] bottom-0 w-[50px] absolute"
+          />
+        )}
+      </div>
 
       <div className="mt-6 w-full flex items-center justify-between gap-4">
         <button
