@@ -98,6 +98,12 @@ const Dashboard = () => {
     setSectionBusy((prev) => ({ ...prev, [section]: false }));
   };
 
+  const getStatusClass = (message) => {
+    if (!message) return "";
+    if (/^(Error:|No file)/i.test(message)) return "text-red-400";
+    return "text-green-300";
+  };
+
   const requestSectionCancel = (section) => {
     sectionCancelRef.current[section] = true;
     setSectionStatus(section, "Cancel requested...");
@@ -615,6 +621,21 @@ const Dashboard = () => {
       file: singleFile,
       massFiles: [],
     }));
+  };
+
+  const handleSoftwareFileSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) {
+      setSoftwareForm((prev) => ({ ...prev, file: null, massFiles: [] }));
+      return;
+    }
+
+    if (files.length > 1) {
+      setSoftwareForm((prev) => ({ ...prev, file: null, massFiles: files }));
+      return;
+    }
+
+    setSoftwareForm((prev) => ({ ...prev, file: files[0], massFiles: [] }));
   };
 
   const handleBillboardFileSelect = (e) => {
@@ -1792,6 +1813,7 @@ const Dashboard = () => {
             }}
             onRevert={() => revertSimpleForm(setSoftwareForm, softwareEditSnapshot)}
             onClear={() => clearSimpleFormFields(setSoftwareForm)}
+            onFileSelect={handleSoftwareFileSelect}
             submitDisabled={softwareSubmitDisabled}
             clearDisabled={softwareClearDisabled}
             revertDisabled={softwareRevertDisabled}
@@ -1822,7 +1844,9 @@ const Dashboard = () => {
           />
 
           {status.software && (
-            <p className="mt-3 text-sm text-green-300">{status.software}</p>
+            <p className={`mt-3 text-sm ${getStatusClass(status.software)}`}>
+              {status.software}
+            </p>
           )}
           {softwareError && <p className="mt-2 text-red-400">{softwareError.message}</p>}
         </section>
