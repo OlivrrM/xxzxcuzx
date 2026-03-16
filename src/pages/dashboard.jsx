@@ -1337,6 +1337,7 @@ const Dashboard = () => {
       (
         softwareForm.name === softwareEditSnapshot.name &&
         softwareForm.url === softwareEditSnapshot.url &&
+        softwareForm.downloadLink === softwareEditSnapshot.downloadLink &&
         softwareForm.description === softwareEditSnapshot.description &&
         softwareForm.dateCreated === softwareEditSnapshot.dateCreated
       )
@@ -1828,6 +1829,7 @@ const Dashboard = () => {
                 const snapshot = {
                   name: item.name || "",
                   url: item.url || "",
+                  downloadLink: item.downloadLink || "",
                   description: item.description || "",
                   dateCreated: item.dateCreated || "",
                   subtext1: item.subtext1 || "",
