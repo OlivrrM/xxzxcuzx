@@ -53,6 +53,10 @@ const GameDetail = () => {
     games.find((entry) => slugify(entry.name) === decodedName.toLowerCase()) ||
     games.find((entry) => entry.name?.toLowerCase() === decodedName.toLowerCase());
 
+
+  console.log("Decoded game name:", decodedName);
+  console.log("Matched game:", game);
+
   if (loading) {
     return (
       <div className="p-4">
@@ -115,11 +119,13 @@ const GameDetail = () => {
   const hasCredits = creditEntries.length > 0;
 
   const rawEmbed = String(game.url || "").trim();
+  const gameType = String(game.gameType || "").toLowerCase();
   const hasIframeMarkup = /^<iframe\b/i.test(rawEmbed);
-  const canRenderEmbed = game.gameType === "web games" && hasIframeMarkup;
+  // Allow raw URLs (e.g. https://...) to be treated as embeds as long as the game is a web game.
+  const canRenderEmbed = gameType === "web games" && Boolean(rawEmbed);
   const hackPatchLink = String(game.hackPatchLink || "").trim();
-  const showPatchNow = game.gameType === "hacks" && Boolean(hackPatchLink);
-  const showDetailImageGrid = game.gameType === "pc games" || game.gameType === "hacks";
+  const showPatchNow = gameType === "hacks" && Boolean(hackPatchLink);
+  const showDetailImageGrid = gameType === "pc games" || gameType === "hacks";
   const detailImages = Array.isArray(game.detailImages) ? game.detailImages : [];
   const embed = parseGameEmbed(game.url);
   const embedRatio =

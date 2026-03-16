@@ -2,21 +2,20 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import ExifReader from "exifreader";
-import imageCompression from "browser-image-compression";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useAuth } from "../contexts/AuthContext";
 import useImages from "../hooks/useImages";
 import { addItem } from "../utils/firestore";
-import { uploadFileToGitHub, deleteFileFromGitHub } from "../utils/github";
+import { deleteFileFromGitHub } from "../utils/github";
 import { db } from "../firebase";
 import GenericEntryForm from "../components/dashboard/GenericEntryForm";
 import ItemList from "../components/dashboard/ItemList";
-
-const compressAndUploadFile = async (file, path) => {
-  const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
-  const compressedFile = await imageCompression(file, options);
-  return await uploadFileToGitHub(compressedFile, path);
-};
+import {
+  sectionConfigs,
+  normalizeCredits,
+  compressAndUploadFile,
+  uploadDetailImages,
+} from "./dashboardConfig";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -68,72 +67,13 @@ const Dashboard = () => {
     billboard: false,
   });
 
-  const [photoForm, setPhotoForm] = useState({
-    file: null,
-    massFiles: [],
-    editItem: null,
-    name: "",
-    description: "",
-    dateCreated: "",
-    cameraModel: "",
-    location: "",
-  });
-
-  const [softwareForm, setSoftwareForm] = useState({
-    file: null,
-    massFiles: [],
-    editItem: null,
-    name: "",
-    url: "",
-    dateCreated: "",
-    subtext1: "",
-    subtext2: "",
-    blurb: "",
-    detailFiles: [],
-    detailImages: [],
-    detailImagePaths: [],
-  });
-
-  const [gamesForm, setGamesForm] = useState({
-    file: null,
-    massFiles: [],
-    editItem: null,
-    name: "",
-    gameType: "",
-    textColor: "",
-    borderColor: "",
-    macLink: "",
-    iosLink: "",
-    androidLink: "",
-    windowsLink: "",
-    linuxLink: "",
-    steamLink: "",
-    romhackingLink: "",
-    releasedStatus: "",
-    updated: "",
-    published: "",
-    credits: [],
-    creditName: "",
-    creditRole: "",
-    detailFiles: [],
-    detailImages: [],
-    detailImagePaths: [],
-    hackPatchLink: "",
-    url: "",
-    description: "",
-  });
+  const [photoForm, setPhotoForm] = useState(sectionConfigs.photography.initialForm());
+  const [softwareForm, setSoftwareForm] = useState(sectionConfigs.software.initialForm());
+  const [gamesForm, setGamesForm] = useState(sectionConfigs.games.initialForm());
 
   const isValidHexColor = (value) => /^#[0-9A-Fa-f]{6}$/.test(value || "");
 
-  const [billboardForm, setBillboardForm] = useState({
-    file: null,
-    massFiles: [],
-    editItem: null,
-    name: "",
-    blurb: "",
-    url: "",
-    dateCreated: "",
-  });
+  const [billboardForm, setBillboardForm] = useState(sectionConfigs.billboard.initialForm());
 
   useEffect(() => {
     if (!user) {
@@ -390,63 +330,15 @@ const Dashboard = () => {
   };
 
   const resetSoftwareForm = () => {
-    setSoftwareForm({
-      file: null,
-      massFiles: [],
-      editItem: null,
-      name: "",
-      url: "",
-      dateCreated: "",
-      subtext1: "",
-      subtext2: "",
-      blurb: "",
-      detailFiles: [],
-      detailImages: [],
-      detailImagePaths: [],
-    });
+    setSoftwareForm(sectionConfigs.software.initialForm());
   };
 
   const resetBillboardForm = () => {
-    setBillboardForm({
-      file: null,
-      massFiles: [],
-      editItem: null,
-      name: "",
-      blurb: "",
-      url: "",
-      dateCreated: "",
-    });
+    setBillboardForm(sectionConfigs.billboard.initialForm());
   };
 
   const resetGamesForm = () => {
-    setGamesForm({
-      file: null,
-      massFiles: [],
-      editItem: null,
-      name: "",
-      gameType: "",
-      textColor: "",
-      borderColor: "",
-      macLink: "",
-      iosLink: "",
-      androidLink: "",
-      windowsLink: "",
-      linuxLink: "",
-      steamLink: "",
-      romhackingLink: "",
-      releasedStatus: "",
-      updated: "",
-      published: "",
-      credits: [],
-      creditName: "",
-      creditRole: "",
-      detailFiles: [],
-      detailImages: [],
-      detailImagePaths: [],
-      hackPatchLink: "",
-      url: "",
-      description: "",
-    });
+    setGamesForm(sectionConfigs.games.initialForm());
     setGamesEditSnapshot(null);
   };
 
@@ -500,29 +392,7 @@ const Dashboard = () => {
 
   const isPcOrHackGameType = (value) => value === "pc games" || value === "hacks";
 
-  const uploadGamesDetailImages = async (files) => {
-    const uploaded = [];
-    for (const [index, file] of files.entries()) {
-      const path = `games/details/${Date.now()}_${index}_${file.name}`;
-      const src = await compressAndUploadFile(file, path);
-      uploaded.push({ src, path });
-    }
-    return uploaded;
-  };
-
-  const normalizeCredits = (value) => {
-    if (Array.isArray(value)) {
-      return value
-        .map((entry) => ({
-          name: String(entry?.name || "").trim(),
-          role: String(entry?.role || "").trim(),
-        }))
-        .filter((entry) => entry.name && entry.role);
-    }
-
-    const legacyCredit = String(value || "").trim();
-    return legacyCredit ? [{ name: legacyCredit, role: "Credit" }] : [];
-  };
+  const uploadGamesDetailImages = (files) => uploadDetailImages(files, "games/details");
 
   const areCreditsEqual = (left, right) => {
     const normalizedLeft = normalizeCredits(left);
@@ -533,45 +403,6 @@ const Dashboard = () => {
       const other = normalizedRight[index];
       return credit.name === other.name && credit.role === other.role;
     });
-  };
-
-  const getGamesPlatformLinksPayload = (form) => {
-    const linkFields = [
-      "macLink",
-      "iosLink",
-      "androidLink",
-      "windowsLink",
-      "linuxLink",
-      "steamLink",
-      "romhackingLink",
-    ];
-
-    return linkFields.reduce((acc, field) => {
-      const value = form[field]?.trim();
-      if (value) acc[field] = value;
-      return acc;
-    }, {});
-  };
-
-  const getGamesEmbedPayload = (form) => {
-    const embed = form.url?.trim();
-    return embed ? { url: embed } : {};
-  };
-
-  const getGamesMoreInfoPayload = (form) => {
-    const payload = {};
-    if (form.releasedStatus) payload.releasedStatus = form.releasedStatus;
-    if (form.updated) payload.updated = form.updated;
-    if (form.published) payload.published = form.published;
-    const credits = normalizeCredits(form.credits);
-    if (credits.length > 0) payload.credits = credits;
-
-    const hackPatchLink = form.hackPatchLink?.trim();
-    if (form.gameType === "hacks" && hackPatchLink) {
-      payload.hackPatchLink = hackPatchLink;
-    }
-
-    return payload;
   };
 
   const clearSimpleFormFields = (setter) => {
@@ -1093,14 +924,10 @@ const Dashboard = () => {
     try {
       const runGamesEdit = async () => {
         throwIfCancelled("games");
-        const updates = { name: gamesForm.name };
-        if (gamesForm.gameType) updates.gameType = gamesForm.gameType;
-        if (gamesForm.textColor) updates.textColor = gamesForm.textColor;
-        if (gamesForm.borderColor) updates.borderColor = gamesForm.borderColor;
-        if (gamesForm.description) updates.description = gamesForm.description;
-        Object.assign(updates, getGamesEmbedPayload(gamesForm));
-        Object.assign(updates, getGamesPlatformLinksPayload(gamesForm));
-        Object.assign(updates, getGamesMoreInfoPayload(gamesForm));
+        const updates = {
+          ...sectionConfigs.games.buildPayload(gamesForm),
+          ...(gamesForm.file && !gamesForm.name ? { name: gamesForm.file.name } : {}),
+        };
 
         if (isPcOrHackGameType(gamesForm.gameType) && gamesForm.detailFiles.length > 0) {
           setSectionStatus("games", "Uploading additional images...");
@@ -1154,20 +981,17 @@ const Dashboard = () => {
               throwIfCancelled("games");
             }
             await addItem("games", {
-              name: file.name,
-              gameType: gamesForm.gameType,
-              textColor: gamesForm.textColor,
-              borderColor: gamesForm.borderColor,
+              ...sectionConfigs.games.buildPayload(gamesForm),
+              name: gamesForm.name || file.name,
               src,
               path,
               ...(uploadedDetailImages.length > 0
-                ? {
-                    detailImages: uploadedDetailImages.map((entry) => entry.src),
-                    detailImagePaths: uploadedDetailImages.map((entry) => entry.path),
-                  }
+                ? sectionConfigs.games.mergeDetailImages(
+                    gamesForm.detailImages,
+                    gamesForm.detailImagePaths,
+                    uploadedDetailImages
+                  )
                 : {}),
-              ...getGamesMoreInfoPayload(gamesForm),
-              ...getGamesPlatformLinksPayload(gamesForm),
             });
           }
           return;
@@ -1186,22 +1010,17 @@ const Dashboard = () => {
           throwIfCancelled("games");
         }
         await addItem("games", {
+          ...sectionConfigs.games.buildPayload(gamesForm),
           name: gamesForm.name || gamesForm.file.name,
-          gameType: gamesForm.gameType,
-          textColor: gamesForm.textColor,
-          borderColor: gamesForm.borderColor,
           src,
           path,
-          description: gamesForm.description,
           ...(uploadedDetailImages.length > 0
-            ? {
-                detailImages: uploadedDetailImages.map((entry) => entry.src),
-                detailImagePaths: uploadedDetailImages.map((entry) => entry.path),
-              }
+            ? sectionConfigs.games.mergeDetailImages(
+                gamesForm.detailImages,
+                gamesForm.detailImagePaths,
+                uploadedDetailImages
+              )
             : {}),
-          ...getGamesEmbedPayload(gamesForm),
-          ...getGamesMoreInfoPayload(gamesForm),
-          ...getGamesPlatformLinksPayload(gamesForm),
         });
       };
 
