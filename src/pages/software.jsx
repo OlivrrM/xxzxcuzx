@@ -16,16 +16,22 @@ const Software = () => {
     );
   }
 
+  const sortedItems = [...items].sort((a, b) => {
+    const aDate = a.dateCreated ? new Date(a.dateCreated).getTime() : 0;
+    const bDate = b.dateCreated ? new Date(b.dateCreated).getTime() : 0;
+    return bDate - aDate;
+  });
+
   return (
     <div className="p-4 flex flex-col items-center w-full">
       <img src={softwareGif} alt="Software" className="text-2xl font-bold h-[150px] w-[340px] object-cover" />
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">Error loading entries</p>}
-      {!loading && !error && items.length === 0 && (
+      {!loading && !error && sortedItems.length === 0 && (
         <p className="italic">No software entries yet.</p>
       )}
       <ul className="space-y-6">
-        {items.map((app, index) => {
+        {sortedItems.map((app, index) => {
           const isReversed = index % 2 === 1;
           const imageSrc = app.src || (app.detailImages && app.detailImages[0]);
 
