@@ -16,6 +16,7 @@ export const softwareSchema = z.object({
   path: z.string().optional(),
   description: z.string().optional(),
   url: z.string().url().optional(),
+  downloadLink: z.string().url().optional(),
   subtext1: z.string().optional(),
   subtext2: z.string().optional(),
   blurb: z.string().optional(),

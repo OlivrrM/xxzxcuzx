@@ -12,6 +12,20 @@ export default function useImages(name = "photography") {
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const formatSchemaError = (error) => {
+    // Zod errors have `issues` array with path + message
+    if (error?.issues && Array.isArray(error.issues)) {
+      return error.issues
+        .map((issue) => {
+          const path = Array.isArray(issue.path) ? issue.path.join(".") : String(issue.path);
+          return `${path || "(root)"}: ${issue.message}`;
+        })
+        .join("; ");
+    }
+    if (error?.message) return error.message;
+    return String(error);
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -57,7 +71,7 @@ export default function useImages(name = "photography") {
         }
       } catch (err) {
         console.error(`Failed to fetch ${name} collection`, err);
-        if (!cancelled) setError(err);
+        if (!cancelled) setError(formatSchemaError(err));
       } finally {
         if (!cancelled) setLoading(false);
       }

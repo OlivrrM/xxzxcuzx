@@ -86,6 +86,7 @@ export const sectionConfigs = {
             editItem: null,
             name: "",
             url: "",
+            downloadLink: "",
             dateCreated: "",
             subtext1: "",
             subtext2: "",
@@ -97,6 +98,7 @@ export const sectionConfigs = {
         buildPayload: (form) => ({
             name: normalizeString(form.name),
             url: normalizeString(form.url),
+            downloadLink: normalizeString(form.downloadLink),
             dateCreated: normalizeString(form.dateCreated),
             subtext1: normalizeString(form.subtext1),
             subtext2: normalizeString(form.subtext2),

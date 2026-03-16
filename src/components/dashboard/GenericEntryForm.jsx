@@ -111,6 +111,24 @@ const GenericEntryForm = ({
         </div>
       )}
 
+      {isSoftware && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-download-link`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Download link
+          </label>
+          <input
+            id={`${idPrefix}-download-link`}
+            type="text"
+            value={formValues.downloadLink || ""}
+            onChange={(e) => onChange("downloadLink", e.target.value)}
+            className="app-input w-full"
+          />
+        </div>
+      )}
+
       {section === "billboard" && (
         <div>
           <label

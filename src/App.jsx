@@ -13,6 +13,8 @@ import Software from "./pages/software";
 import Login from "./pages/login";
 import Dashboard from "./pages/dashboard";
 
+import notFound from "./assets/notfound.gif"
+
 function App() {
   return (
     <div className="page-container flex flex-col min-h-screen items-center">
@@ -30,7 +32,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
 
-          <Route path="/*" element={<h1>Page Not Found</h1>} />
+          <Route path="/*" element={<div className="flex-1 pt-12 justify-start items-center p-4 flex flex-col">
+            <h3 className="text-2xl mb-4" style={{color: "#ff0000"}}>Page Not Found</h3>
+            <img src={notFound} alt="Not found" className="w-[180px] h-auto max-w-md mt-4 pr-8" />
+          </div>} />
         </Routes>
       </div>
 

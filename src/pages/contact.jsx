@@ -1,11 +1,13 @@
 import phone from "../assets/phone.gif";
-
+import mail from "../assets/mail.gif";
 
 const Contact = () => {
     return (
         <div className="p-4 w-full">
-            <h1 className="text-2xl font-bold mb-6">Contact</h1>
-
+            <div className="flex w-full mb-6">
+                <img src={mail} alt="Mail" className="w-auto h-fit" />
+                <h1 className="text-3xl font-bold mx-auto">Contact</h1>
+            </div>
             <form
                 action="https://formspree.io/f/xreyzdoz"
                 method="POST"

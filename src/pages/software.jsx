@@ -1,6 +1,8 @@
 import React from "react";
 import useImages from "../hooks/useImages";
 import notAvailable from "../assets/down.gif";
+import softwareGif from "../assets/software.gif";
+import floppyGif from "../assets/floppy.gif";
 
 const Software = () => {
   const { data: items, loading, error } = useImages("software");
@@ -15,48 +17,82 @@ const Software = () => {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Software</h1>
+    <div className="p-4 flex flex-col items-center w-full">
+      <img src={softwareGif} alt="Software" className="text-2xl font-bold h-[150px] w-[340px] object-cover" />
       {loading && <p>Loading…</p>}
       {error && <p className="text-red-600">Error loading entries</p>}
       {!loading && !error && items.length === 0 && (
         <p className="italic">No software entries yet.</p>
       )}
-      <ul className="space-y-4">
-        {items.map((app) => (
-          <li key={app.id} className="border p-3 rounded">
-            <h2 className="font-semibold">{app.name}</h2>
-            {app.description && <p>{app.description}</p>}
-            {app.subtext1 && <p className="text-sm text-gray-600">{app.subtext1}</p>}
-            {app.subtext2 && <p className="text-sm text-gray-600">{app.subtext2}</p>}
-            {app.blurb && <p className="italic">{app.blurb}</p>}
-            {app.url && (
-              <a
-                href={app.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 underline"
+      <ul className="space-y-6">
+        {items.map((app, index) => {
+          const isReversed = index % 2 === 1;
+          const imageSrc = app.src || (app.detailImages && app.detailImages[0]);
+
+          return (
+            <li
+              key={app.id}
+              className="border p-4 flex flex-col md:flex-row gap-4 items-stretch"
+            >
+              <div
+                className={`flex items-center justify-center ${
+                  isReversed ? "md:order-2" : "md:order-1"
+                }`}
               >
-                Visit project
-              </a>
-            )}
-            {app.detailImages && app.detailImages.length > 0 && (
-              <div className="mt-4">
-                <h3 className="font-medium">Images:</h3>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {app.detailImages.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`Image ${idx + 1}`}
-                      className="w-20 h-20 object-cover rounded"
-                    />
-                  ))}
+                {imageSrc ? (
+                  <img
+                    src={imageSrc}
+                    alt={app.name || "Software"}
+                    className="w-full max-w-[300px] h-auto object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-full max-w-[300px] h-[160px] bg-white/10 rounded flex items-center justify-center text-sm text-white/60">
+                    No image available
+                  </div>
+                )}
+              </div>
+
+              <div
+                className={`flex-1 flex flex-col justify-between ${
+                  isReversed ? "md:order-1" : "md:order-2"
+                }`}
+              >
+                <div>
+                  <h2 className="font-semibold text-white text-3xl">{app.name}</h2>
+                  {app.subtext1 && <p className="text-xl mb-3 text-gray-300">{app.subtext1}</p>}
+                  {app.subtext2 && <p className="text-xl text-gray-500">{app.subtext2}</p>}
+                  {app.blurb && (
+                    <p
+                      className={`text-2xl ${
+                        isReversed ? "text-end" : "text-start"
+                      } text-white/80 mt-3`}
+                    >
+                      {app.blurb}
+                    </p>
+                  )}
+                </div>
+
+                <div className={`flex w-full ${isReversed ? "flex-row-reverse" : "flex-row"} items-center gap-2 mt-4`}>
+                  {(() => {
+                    const downloadHref = app.downloadLink || app.url;
+                    if (!downloadHref) return null;
+                    return (
+                      <a
+                        href={downloadHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <img src={floppyGif} alt="Download" className="w-10 h-auto" />
+                        <span className="text-blue-400 underline">Download</span>
+                      </a>
+                    );
+                  })()}
                 </div>
               </div>
-            )}
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
