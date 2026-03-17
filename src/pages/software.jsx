@@ -84,6 +84,7 @@ const Software = () => {
                       href={app.downloadLink}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="download button"
                     >
                       <img src={floppyGif} alt="Floppy disk" className="w-10 h-auto" />
                     </a>

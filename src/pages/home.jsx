@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc, setDoc, increment } from "firebase/firestore";
 import clickMe from "../assets/clickme.gif";
+import guestBook from "../assets/signbook.gif";
 
 const Home = () => {
     const { data: billboardItems, loading, error } = useImages("billboard");
@@ -99,6 +100,15 @@ const Home = () => {
               )}
               {counterError && <p className="text-red-600">{counterError}</p>}
             </div>
+
+            <button
+              type="button"
+              onClick={() => window.location.assign("/guestbook")}
+              className="fixed shadow-none p-0 bottom-4 left-4 object-cover flex flex-col gap-3 items-center justify-center z-50"
+            >
+              <a href="/visitors" style={{color: "#ff0000"}}>Visit Guestbook</a>
+              <img src={guestBook} alt="Guest Book" className="w-25 h-auto" />
+            </button>
 
             {!loading && !error && billboardItems.length > 0 && (
                 <div className="w-full max-w-4xl mt-8">

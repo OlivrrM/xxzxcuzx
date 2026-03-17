@@ -10,10 +10,13 @@ import Photography from "./pages/photography";
 import Photo from "./pages/photo/photo";
 import Contact from "./pages/contact";
 import Software from "./pages/software";
+import GuestBook from "./pages/guestBook";
+import Visitors from "./pages/visitors";
 import Login from "./pages/login";
 import Dashboard from "./pages/dashboard";
 
-import notFound from "./assets/notfound.gif"
+import CursorGifHover from "./components/CursorGifHover";
+import notFound from "./assets/notfound.gif";
 
 function App() {
   return (
@@ -27,6 +30,8 @@ function App() {
           <Route path="/games/:gameName" element={<GameDetail />} />
           <Route path="/photography" element={<Photography />} />
           <Route path="/photography/:index" element={<Photo />} />
+          <Route path="/guestbook" element={<GuestBook />} />
+          <Route path="/visitors" element={<Visitors />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/software" element={<Software />} />
           <Route path="/login" element={<Login />} />
@@ -40,6 +45,7 @@ function App() {
       </div>
 
       <Footer />
+      <CursorGifHover />
     </div>
   );
 }

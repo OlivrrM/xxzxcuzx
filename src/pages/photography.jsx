@@ -18,12 +18,15 @@ import frame43_2 from "../assets/Frames/4.3/frame2.png";
 import frame43_3 from "../assets/Frames/4.3/frame3.png";
 import frame43_4 from "../assets/Frames/4.3/frame4.png";
 
+import bug1 from "../assets/bug1.gif";
+import bug2 from "../assets/bug2.gif";
+
 const FRAME_CONFIG = {
   "1:1": [
     { src: frame11_0, borderPx: 18 },
-    { src: frame11_1, borderPx: 18 },
+    { src: frame11_1, borderPx: 20 },
     { src: frame11_2, borderPx: 18 },
-    { src: frame11_3, borderPx: 20 },
+    { src: frame11_3, borderPx: 17 },
     { src: frame11_4, borderPx: 20 },
   ],
   "4:3": [
@@ -98,6 +101,8 @@ const Photography = () => {
   const [displayedImages, setDisplayedImages] = useState([]);
   const [hasMore, setHasMore] = useState(true);
 
+  const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
   useEffect(() => {
     if (images.length > 0) {
       setDisplayedImages(images.slice(0, 20));
@@ -157,7 +162,7 @@ const Photography = () => {
       <button
         type="button"
         onClick={handleRandomClick}
-        className="mx-auto mb-16 block bg-transparent p-0 shadow-none"
+        className="mx-auto mb-2 block bg-transparent p-0 shadow-none"
         aria-label="Open random photograph"
       >
         <img
@@ -178,7 +183,7 @@ const Photography = () => {
         >
           <Masonry
             breakpointCols={breakpointColumnsObj}
-            className="flex w-auto -ml-2 overflow-x-hidden"
+            className="flex w-full overflow-visible pt-2"
             columnClassName="pl-10"
           >
             {displayedImages.map((img, idx) => {
@@ -198,9 +203,9 @@ const Photography = () => {
                 }}
                 aria-label={`Open photo ${img.name || idx + 1}`}
               >
-                <div className="relative h-auto mx-auto">
+                <div className="relative h-auto mx-auto overflow-visible">
                   <div
-                    className="absolute z-0 overflow-hidden flex items-center justify-center"
+                    className="absolute z-0 overflow-visible flex items-center justify-center"
                     style={{
                       top: frameBorderPx,
                       right: frameBorderPx,
@@ -215,6 +220,29 @@ const Photography = () => {
                       onLoad={handleImageLoad(key)}
                       loading="lazy"
                     />
+                    {(() => {
+                      const x = randomInt(1, 100);
+                      if (x === 1) {
+                        return (
+                          <img
+                            src={bug1}
+                            alt="Bug"
+                            className="absolute w-[full] h-full object-contain z-10 transform scale-[0.5]"
+                          />
+                        );
+                      }
+                      if (x === 2) {
+                        return (
+                          <img
+                            src={bug2}
+                            alt="Bug"
+                            className="absolute w-[full] h-full object-contain z-10"
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+
                   </div>
                   {frame?.src && (
                     <img

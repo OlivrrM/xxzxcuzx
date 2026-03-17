@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import { useParams } from "react-router";
-import { FaApple, FaAndroid, FaWindows, FaLinux, FaSteam, FaMobileAlt } from "react-icons/fa";
+import { FaApple, FaSteam } from "react-icons/fa";
 import useImages from "../hooks/useImages";
 import romIcon from "../assets/rom.jpg";
+import kitten from "../assets/kitten2.gif";
+
+import androidIcon from "../assets/xxzx_Icons/Android.png";
+import windowsIcon from "../assets/xxzx_Icons/windows.png";
+import linuxIcon from "../assets/xxzx_Icons/linux.png";
+import iosIcon from "../assets/xxzx_Icons/ios.png";
 
 const slugify = (value) =>
   String(value || "")
@@ -85,10 +91,10 @@ const GameDetail = () => {
 
   const platformLinks = [
     { key: "macLink", icon: FaApple, label: "macOS" },
-    { key: "iosLink", icon: FaMobileAlt, label: "iOS" },
-    { key: "androidLink", icon: FaAndroid, label: "Android" },
-    { key: "windowsLink", icon: FaWindows, label: "Windows" },
-    { key: "linuxLink", icon: FaLinux, label: "Linux" },
+    { key: "iosLink", imageSrc: iosIcon, label: "iOS" },
+    { key: "androidLink", imageSrc: androidIcon, label: "Android" },
+    { key: "windowsLink", imageSrc: windowsIcon, label: "Windows" },
+    { key: "linuxLink", imageSrc: linuxIcon, label: "Linux" },
     { key: "steamLink", icon: FaSteam, label: "Steam" },
     { key: "romhackingLink", imageSrc: romIcon, label: "Romhacking" },
   ].filter((item) => Boolean(game[item.key]));
@@ -117,6 +123,7 @@ const GameDetail = () => {
     }
   }
   const hasCredits = creditEntries.length > 0;
+  const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   const rawEmbed = String(game.url || "").trim();
   const gameType = String(game.gameType || "").toLowerCase();
@@ -144,13 +151,16 @@ const GameDetail = () => {
       {canRenderEmbed && embed?.src && (
         <div className="w-full max-w-5xl mx-auto mb-6">
           <div
-            className="mx-auto w-full border-2 overflow-hidden"
+            className="mx-auto w-full border-2 relative"
             style={{
               aspectRatio: embedRatio,
               maxWidth: embedMaxWidth,
               ...(game.borderColor ? { borderColor: game.borderColor } : {}),
             }}
           >
+            {randomInt(1, 10) === 1 && (
+              <img className="absolute w-[60px] top-[-57px] z-10" src={kitten} alt="Kitten" />
+            )}
             {React.createElement("iframe", {
               src: embed.src,
               title: game.name || "game embed",
@@ -195,7 +205,7 @@ const GameDetail = () => {
                   rel="noopener noreferrer"
                   aria-label={label}
                   title={label}
-                  className="text-white text-2xl"
+                  className="download button text-white text-2xl"
                 >
                   {Icon ? <Icon /> : <img src={imageSrc} alt={label} className="w-7 h-7 object-cover" />}
                 </a>
