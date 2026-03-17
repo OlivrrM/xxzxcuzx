@@ -49,10 +49,10 @@ const Software = () => {
                   <img
                     src={imageSrc}
                     alt={app.name || "Software"}
-                    className="w-full max-w-[300px] h-auto object-cover rounded"
+                    className="w-full max-w-[300px] h-auto object-cover"
                   />
                 ) : (
-                  <div className="w-full max-w-[300px] h-[160px] bg-white/10 rounded flex items-center justify-center text-sm text-white/60">
+                  <div className="w-full max-w-[300px] h-[160px] bg-white/10 flex items-center justify-center text-sm text-white/60">
                     No image available
                   </div>
                 )}
@@ -61,7 +61,7 @@ const Software = () => {
               <div
                 className={`flex-1 flex flex-col justify-between ${
                   isReversed ? "md:order-1" : "md:order-2"
-                }`}
+                } text-center md:text-left`}
               >
                 <div>
                   <h2 className="font-semibold text-white text-3xl">{app.name}</h2>
@@ -69,9 +69,7 @@ const Software = () => {
                   {app.subtext2 && <p className="text-xl text-gray-500">{app.subtext2}</p>}
                   {app.blurb && (
                     <p
-                      className={`text-2xl ${
-                        isReversed ? "text-end" : "text-start"
-                      } text-white/80 mt-3`}
+                      className={`text-2xl text-white/80 mt-3 ${isReversed ? "md:text-end" : "md:text-start"}`}
                     >
                       {app.blurb}
                     </p>

@@ -20,58 +20,32 @@ import frame43_4 from "../assets/Frames/4.3/frame4.png";
 
 import bug1 from "../assets/bug1.gif";
 import bug2 from "../assets/bug2.gif";
+import spider from "../assets/spider.gif";
 
 const FRAME_CONFIG = {
   "1:1": [
-    { src: frame11_0, borderPx: 18 },
-    { src: frame11_1, borderPx: 20 },
-    { src: frame11_2, borderPx: 18 },
+    { src: frame11_0, borderPx: 12 },
+    { src: frame11_1, borderPx: 22 },
+    { src: frame11_2, borderPx: 12 },
     { src: frame11_3, borderPx: 17 },
-    { src: frame11_4, borderPx: 20 },
+    { src: frame11_4, borderPx: 25 },
   ],
   "4:3": [
-    { src: frame43_0, borderPx: 2 },
-    { src: frame43_1, borderPx: 2 },
-    { src: frame43_2, borderPx: 2 },
-    { src: frame43_3, borderPx: 2 },
-    { src: frame43_4, borderPx: 2 },
+    { src: frame43_0, borderPx: 14 },
+    { src: frame43_1, borderPx: 12 },
+    { src: frame43_2, borderPx: 10 },
+    { src: frame43_3, borderPx: 16 },
+    { src: frame43_4, borderPx: 20 },
   ],
   "3:4": [
-    { src: frame43_0, borderPx: 2 },
-    { src: frame43_1, borderPx: 2 },
-    { src: frame43_2, borderPx: 2 },
-    { src: frame43_3, borderPx: 2 },
-    { src: frame43_4, borderPx: 2 },
+    { src: frame43_0, borderPx: 20 },
+    { src: frame43_1, borderPx: 22 },
+    { src: frame43_2, borderPx: 16 },
+    { src: frame43_3, borderPx: 16 },
+    { src: frame43_4, borderPx: 20 },
   ],
 };
 
-const RATIO_TARGETS = {
-  "1:1": 1,
-  "4:3": 4 / 3,
-  "3:4": 3 / 4,
-};
-
-const getRatioBucket = (width, height, tolerance = 0.06) => {
-  if (!width || !height) return "1:1";
-  const ratio = width / height;
-
-  let bestKey = "1:1";
-  let bestDelta = Number.POSITIVE_INFINITY;
-
-  Object.entries(RATIO_TARGETS).forEach(([key, target]) => {
-    const delta = Math.abs(ratio - target) / target;
-    if (delta < bestDelta) {
-      bestDelta = delta;
-      bestKey = key;
-    }
-  });
-
-  if (bestDelta <= tolerance) {
-    return bestKey;
-  }
-
-  return bestKey;
-};
 
 const getSeedFromString = (value) => {
   const input = String(value || "");
@@ -97,7 +71,6 @@ const Photography = () => {
   const navigate = useNavigate();
   const { data: images, loading, error } = useImages("photography");
   const [imageRatioByKey, setImageRatioByKey] = useState({});
-  const [imageFlipByKey, setImageFlipByKey] = useState({});
   const [displayedImages, setDisplayedImages] = useState([]);
   const [hasMore, setHasMore] = useState(true);
 
@@ -121,25 +94,19 @@ const Photography = () => {
 
   const handleImageLoad = (key) => (event) => {
     const loadedImage = event.currentTarget;
-    const shouldFlip = loadedImage.naturalHeight > loadedImage.naturalWidth;
-    const ratioBucket = getRatioBucket(
-      loadedImage.naturalWidth,
-      loadedImage.naturalHeight
-    );
+    const label = loadedImage.alt || loadedImage.src || key;
+    console.log(`Image loaded: ${label}, dimensions: ${loadedImage.naturalWidth}x${loadedImage.naturalHeight}`);
+
+    const delta = loadedImage.naturalHeight - loadedImage.naturalWidth;
+    const isSquare = Math.abs(delta) <= 5; // allow +/-2px wiggle room
+    const ratioKey = isSquare ? "1:1" : delta > 0 ? "3:4" : "4:3";
+
     setImageRatioByKey((prev) =>
-      prev[key] === ratioBucket
+      prev[key] === ratioKey
         ? prev
         : {
           ...prev,
-          [key]: ratioBucket,
-        }
-    );
-    setImageFlipByKey((prev) =>
-      prev[key] === shouldFlip
-        ? prev
-        : {
-          ...prev,
-          [key]: shouldFlip,
+          [key]: ratioKey,
         }
     );
   };
@@ -183,74 +150,80 @@ const Photography = () => {
         >
           <Masonry
             breakpointCols={breakpointColumnsObj}
-            className="flex w-full overflow-visible pt-2"
-            columnClassName="pl-10"
+            className="flex w-full justify-center overflow-visible pt-8"
+            columnClassName="px-4"
           >
             {displayedImages.map((img, idx) => {
               const key = img.id || idx;
-              const ratioKey = imageRatioByKey[key] || "1:1";
-            const frame = pickFrameForImage(ratioKey, img.name || img.id || idx);
-            const shouldFlipFrame = imageFlipByKey[key] || false;
-            const frameBorderPx = frame?.borderPx ?? 6;
+              const ratioKey = imageRatioByKey[key];;
+              const frame = pickFrameForImage(ratioKey, img.name || img.id || idx);
+              const frameBorderPx = frame?.borderPx ?? 6;
+              const shouldFlip = ratioKey === "3:4";
+              const frameTransform = shouldFlip ? "rotate(90deg) scale(1.3333)" : undefined;
 
             return (
               <button
                 key={key}
                 type="button"
-                className="mb-12 cursor-pointer block w-full bg-transparent p-0 shadow-none"
+                className="mb-20 sm:mb-12 cursor-pointer block w-full bg-transparent p-0 shadow-none"
                 onClick={() => {
                   navigate(`/photography/${idx}`);
                 }}
                 aria-label={`Open photo ${img.name || idx + 1}`}
               >
-                <div className="relative h-auto mx-auto overflow-visible">
-                  <div
-                    className="absolute z-0 overflow-visible flex items-center justify-center"
-                    style={{
-                      top: frameBorderPx,
-                      right: frameBorderPx,
-                      bottom: frameBorderPx,
-                      left: frameBorderPx,
-                    }}
-                  >
-                    <img
-                      src={img.src}
-                      alt={img.name}
-                      className="w-auto h-auto max-w-full max-h-full object-contain"
-                      onLoad={handleImageLoad(key)}
-                      loading="lazy"
-                    />
-                    {(() => {
-                      const x = randomInt(1, 100);
-                      if (x === 1) {
-                        return (
-                          <img
-                            src={bug1}
-                            alt="Bug"
-                            className="absolute w-[full] h-full object-contain z-10 transform scale-[0.5]"
-                          />
-                        );
-                      }
-                      if (x === 2) {
-                        return (
-                          <img
-                            src={bug2}
-                            alt="Bug"
-                            className="absolute w-[full] h-full object-contain z-10"
-                          />
-                        );
-                      }
-                      return null;
-                    })()}
+                <div
+                  className="relative w-full overflow-hidden"
+                  style={{ padding: frameBorderPx }}
+                >
+                  <img
+                    src={img.src}
+                    alt={img.name}
+                    className="w-full h-auto object-contain"
+                    onLoad={handleImageLoad(key)}
+                    loading="lazy"
+                  />
+                  {(() => {
+                    const x = randomInt(1, 100);
+                    const y = randomInt(1, 500);
+                    if (x === 1) {
+                      return (
+                        <img
+                          src={bug1}
+                          alt="Bug"
+                          className="absolute inset-0 w-full h-full object-contain z-10 transform scale-[0.5]"
+                        />
+                      );
+                    }
+                    if (x === 2) {
+                      return (
+                        <img
+                          src={bug2}
+                          alt="Bug"
+                          className="absolute inset-0 w-full h-full object-contain z-10"
+                        />
+                      );
+                    }
 
-                  </div>
+                    if (y === 101) {
+                      return(
+                        <img
+                          src={spider}
+                          alt="Spider"
+                          className="absolute top-[5px] left-[50%] translate-x-[-50%] w-[100px] inset-0 h-fit object-contain z-10"
+                        />
+                      );
+                    }
+
+                    return null;
+                  })()}
+
                   {frame?.src && (
                     <img
                       src={frame.src}
                       alt=""
                       aria-hidden="true"
-                      className="relative scale-[1.05] z-10 w-auto h-auto max-w-full object-contain pointer-events-none"
-                      style={shouldFlipFrame ? { transform: "scaleX(-1)" } : undefined}
+                      className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                      style={frameTransform ? { transform: frameTransform, transformOrigin: 'center' } : undefined}
                     />
                   )}
                 </div>

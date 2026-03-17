@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   margin: 0;
   background-color: black;
@@ -9,6 +17,12 @@ body {
   background-image: url("../../public/Images/background.jpg");
   background-repeat: repeat;
   font-family: 'Times New Roman', Times, serif;
+  /* Keep the page from bouncing on iOS / mobile */
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100%;
 }
 
 h1{
