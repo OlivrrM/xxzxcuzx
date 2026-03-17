@@ -158,8 +158,10 @@ const GuestBook = () => {
   /* UI */
   /* ---------------------------------- */
 
-  const showSignedMessage =
-    hasSessionSigned || status === "Thank you for signing the guest book";
+  // Show 'already signed' only if session is set on load, not immediately after submit
+  const showAlreadySigned = hasSessionSigned && status !== "Thank you for signing the guest book";
+  // Show thank you message only after successful submit
+  const showThankYou = status === "Thank you for signing the guest book";
 
   return (
     <div className="w-full max-w-[600px] mx-auto p-4">
@@ -218,7 +220,11 @@ const GuestBook = () => {
         )}
 
         {/* BUTTONS / STATE */}
-        {showSignedMessage ? (
+        {showThankYou ? (
+          <div className="text-center text-lg text-green-700 font-bold py-4">
+            Thank you for signing the guest book.
+          </div>
+        ) : showAlreadySigned ? (
           <div className="text-center text-lg text-red-700 font-bold py-4">
             You have already signed the guest book.
           </div>
