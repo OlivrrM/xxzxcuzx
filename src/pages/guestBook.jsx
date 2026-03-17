@@ -234,7 +234,7 @@ const GuestBook = () => {
       </form>
 
       <div className="mt-8 text-center">
-        <a href="/visitors" className="text-blue-800 underline">View Guest Book</a>
+        <a href="/visitors" className="text-blue-800 underline">View Guestbook</a>
       </div>
     </div>
   );

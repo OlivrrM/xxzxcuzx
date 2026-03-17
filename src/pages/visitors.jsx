@@ -27,7 +27,7 @@ const Visitors = () => {
   return (
     <div className="w-full max-w-[600px] mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Visitor Messages</h1>
-      <Link to="/guestbook" className="text-blue-800 underline block mb-4 text-center">Sign the Guest Book</Link>
+      <Link to="/guestbook" className="text-blue-800 underline block mb-4 text-center">Sign the Guestbook</Link>
       <section>
         {loading ? (
           <p>Loading…</p>

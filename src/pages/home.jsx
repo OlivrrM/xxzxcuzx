@@ -114,13 +114,21 @@ const Home = () => {
                 <div className="w-full max-w-4xl mt-8">
                     <div className="flex flex-col gap-6 items-center">
                         {billboardItems.map((item) => (
-                            <div onClick={() => {if (item.url) window.open(item.url, '_blank')}} key={item.id} className="bg-transparent flex w-fit p-4 border border-gray-300 cursor-pointer">
+                            <div
+                              onClick={() => {if (item.url) window.open(item.url, '_blank')}}
+                              key={item.id}
+                              className="bg-transparent flex flex-col sm:flex-row w-full max-w-md sm:max-w-2xl p-2 sm:p-4 border border-gray-300 cursor-pointer hover:shadow-md transition-shadow duration-200"
+                            >
                                 {item.src && (
-                                    <img src={item.src} alt={item.name} className="w-full h-48 object-cover mb-2" />
+                                    <img
+                                      src={item.src}
+                                      alt={item.name}
+                                      className="w-full sm:w-48 h-40 sm:h-48 object-cover mb-2 sm:mb-0 rounded-md"
+                                    />
                                 )}
-                                <div className="flex flex-col gap-4 ml-4">
-                                    <h3 className="text-xl underline font-semibold mb-2 text-[#ff0000]">{item.name}</h3>
-                                    {item.blurb && <p className="text-sm text-[#ff0000]">{item.blurb}</p>}
+                                <div className="flex flex-col gap-2 sm:gap-4 sm:ml-4 justify-center w-full">
+                                    <h3 className="text-lg sm:text-xl underline font-semibold mb-1 sm:mb-2 text-[#ff0000] text-center sm:text-left">{item.name}</h3>
+                                    {item.blurb && <p className="text-sm sm:text-base text-[#ff0000] text-center sm:text-left">{item.blurb}</p>}
                                 </div>
                             </div>
                         ))}

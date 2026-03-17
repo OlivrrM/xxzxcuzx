@@ -81,17 +81,17 @@ const Photo = () => {
   }
 
   return (
-    <div className="p-4 max-w-5xl mx-auto flex flex-col items-center text-center">
+    <div className="p-2 sm:p-4 max-w-5xl mx-auto flex flex-col items-center text-center">
       <h1 className="text-2xl font-bold mb-4 italic">{image.name}</h1>
 
-      <div className="relative">
+      <div className="relative w-full flex justify-center">
 
         <PixiImageGlow
           src={image.src}
           alt={image.name}
           borderPx={IMAGE_BORDER_BLUR_PX}
           blurStrength={IMAGE_GLOW_STRENGTH}
-          className="w-full max-w-3xl"
+          className="w-full max-w-xs sm:max-w-2xl md:max-w-3xl h-auto rounded-md"
         />
 
         {randomInt(1, 10) == 5 && (
@@ -103,33 +103,33 @@ const Photo = () => {
         )}
       </div>
 
-      <div className="mt-6 w-full flex items-center justify-between gap-4">
+      {/* Desktop: arrows left/right, big. Mobile: arrows bottom, 50% width each. */}
+      <div className="mt-6 w-full hidden sm:flex flex-row items-center justify-between gap-4">
         <button
           type="button"
           onClick={goToPrevious}
           disabled={!canGoPrevious}
-          className={`relative shadow-none bg-transparent -secondary w-[250px] h-auto hover:bg-transparent -scale-x-100 ${
+          className={`relative shadow-none bg-transparent -secondary w-[120px] h-[120px] hover:bg-transparent -scale-x-100 ${
             canGoPrevious ? "" : "opacity-40 cursor-not-allowed"
           }`}
         >
-          <img src={arrow} alt="Next" className="w-fit h-auto" />
+          <img src={arrow} alt="Previous" className="w-full h-full object-contain" />
         </button>
 
-        <div className="flex-1 text-center">
-          <p className="text-lg text-red-500">{image.description}</p>
-          
+        <div className="flex-1 text-center px-2">
+          <p className="text-base sm:text-lg text-red-500">{image.description}</p>
           {image.dateCreated && (
-            <p className="mt-2 text-lg text-red-500">
+            <p className="mt-2 text-base sm:text-lg text-red-500">
               <b>Date:</b> {image.dateCreated}
             </p>
           )}
           {image.location && (
-            <p className="mt-2 text-lg text-red-500">
+            <p className="mt-2 text-base sm:text-lg text-red-500">
               <b>Location:</b> {image.location}
             </p>
           )}
           {image.cameraModel && (
-          <p className="mt-2 text-lg text-red-500">
+            <p className="mt-2 text-base sm:text-lg text-red-500">
               <b>Camera:</b> {image.cameraModel}
             </p>
           )}
@@ -139,11 +139,35 @@ const Photo = () => {
           type="button"
           onClick={goToNext}
           disabled={!canGoNext}
-          className={`relative shadow-none bg-transparent -secondary w-[250px] h-auto hover:bg-transparent ${
+          className={`relative shadow-none bg-transparent -secondary w-[120px] h-[120px] hover:bg-transparent ${
             canGoNext ? "" : "opacity-40 cursor-not-allowed"
           }`}
         >
-          <img src={arrow} alt="Next" className="w-fit h-auto rotate-x-180" />
+          <img src={arrow} alt="Next" className="w-full h-full object-contain rotate-x-180" />
+        </button>
+      </div>
+
+      {/* Mobile: arrows at bottom, 50% width each, not fixed, no shadow, no padding */}
+      <div className="w-full flex sm:hidden mt-6">
+        <button
+          type="button"
+          onClick={goToPrevious}
+          disabled={!canGoPrevious}
+          className={`w-1/2 h-16 bg-transparent flex items-center justify-center -scale-x-100 border-none shadow-none p-0 m-0 ${
+            canGoPrevious ? "" : "opacity-40 cursor-not-allowed"
+          }`}
+        >
+          <img src={arrow} alt="Previous" className="w-10 h-10 object-contain" />
+        </button>
+        <button
+          type="button"
+          onClick={goToNext}
+          disabled={!canGoNext}
+          className={`w-1/2 h-16 bg-transparent flex items-center justify-center border-none shadow-none p-0 m-0 ${
+            canGoNext ? "" : "opacity-40 cursor-not-allowed"
+          }`}
+        >
+          <img src={arrow} alt="Next" className="w-10 h-10 object-contain rotate-x-180" />
         </button>
       </div>
     </div>
