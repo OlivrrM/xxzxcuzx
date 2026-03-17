@@ -1,137 +1,152 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../firebase";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 const TURNSTILE_SITEKEY = process.env.REACT_APP_TURNSTILE_SITEKEY || "";
 
-const loadTurnstileScript = () => {
-  if (window.turnstile) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector("script[data-turnstile]");
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Failed to load Turnstile script")));
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    script.async = true;
-    script.defer = true;
-    script.setAttribute("data-turnstile", "true");
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Turnstile script"));
-    document.body.appendChild(script);
-  });
-};
-
 const GuestBook = () => {
-
   const navigate = useNavigate();
+
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+
   const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+
   const [captchaToken, setCaptchaToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState("");
+
   const [entries, setEntries] = useState([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
-  const [turnstileError, setTurnstileError] = useState("");
-  const [error, setError] = useState("");
+
   const [userIp, setUserIp] = useState("");
 
-  // Check if user has already signed (by sessionStorage or IP)
   const hasSessionSigned = useMemo(() => {
     return sessionStorage.getItem("guestbook_signed") === "true";
   }, []);
-  const canSubmit = Boolean(name.trim()) && Boolean(message.trim()) && Boolean(captchaToken) && !hasSessionSigned;
-  const resetForm = () => {
-    setName("");
-    setMessage("");
-    setCaptchaToken("");
-    if (window.turnstile && window.turnstile.reset) {
-      window.turnstile.reset();
-    }
-  };
+
+  const canSubmit =
+    name.trim().length > 0 &&
+    message.trim().length > 0 &&
+    captchaToken &&
+    !hasSessionSigned;
+
+  /* ---------------------------------- */
+  /* LOAD DATA */
+  /* ---------------------------------- */
 
   const loadEntries = async () => {
     setLoadingEntries(true);
     try {
-      const q = query(collection(db, "guestbook"), orderBy("createdAt", "desc"), limit(50));
+      const q = query(
+        collection(db, "guestbook"),
+        orderBy("createdAt", "desc"),
+        limit(50)
+      );
       const snap = await getDocs(q);
-      const docs = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+      const docs = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
       setEntries(docs);
     } catch (err) {
-      console.error("Failed to load guest book entries", err);
+      console.error("Failed to load entries", err);
     } finally {
       setLoadingEntries(false);
     }
   };
 
-  useEffect(() => {
-    const isSandboxedFrame = () => {
-      try {
-        return window.self !== window.top && window.frameElement?.sandbox && !window.frameElement.sandbox.contains("allow-scripts");
-      } catch {
-        return false;
-      }
-    };
+  /* ---------------------------------- */
+  /* INIT */
+  /* ---------------------------------- */
 
-    if (isSandboxedFrame()) {
-      setTurnstileError("Turnstile cannot run inside a sandboxed frame (allow-scripts is missing).");
-    } else {
-      loadTurnstileScript().catch(() => {
-        console.warn("Unable to load Turnstile script");
-      });
+  useEffect(() => {
+    if (!TURNSTILE_SITEKEY) {
+      setTurnstileError(
+        "Missing Turnstile site key. Add REACT_APP_TURNSTILE_SITEKEY."
+      );
     }
 
     loadEntries();
-    // Fetch user IP address (do not display)
+
     fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((data) => setUserIp(data.ip))
       .catch(() => setUserIp(""));
   }, []);
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
+  /* ---------------------------------- */
+  /* FORM */
+  /* ---------------------------------- */
+
+  const resetForm = () => {
+    setName("");
+    setMessage("");
+    setCaptchaToken("");
+
+    if (window.turnstile?.reset) {
+      window.turnstile.reset();
+    }
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
     setError("");
     setStatus("");
 
-    // Check sessionStorage first
-    if (sessionStorage.getItem("guestbook_signed") === "true") {
+    if (hasSessionSigned) {
       setError("You have already signed the guest book.");
       return;
     }
 
     try {
-      // Check for existing entry with same IP
-      const q = query(collection(db, "guestbook"),
-        userIp ? orderBy("ip") : orderBy("createdAt", "desc"),
-        userIp ? limit(100) : limit(1)
-      );
-      const snap = await getDocs(q);
-      const alreadyExists = userIp && snap.docs.some(doc => doc.data().ip === userIp);
-      if (alreadyExists) {
-        sessionStorage.setItem("guestbook_signed", "true");
-        setError("You have already signed the guest book.");
-        return;
+      // Basic IP duplicate check (not secure, just UX)
+      if (userIp) {
+        const q = query(collection(db, "guestbook"), limit(100));
+        const snap = await getDocs(q);
+
+        const exists = snap.docs.some(
+          (doc) => doc.data().ip === userIp
+        );
+
+        if (exists) {
+          sessionStorage.setItem("guestbook_signed", "true");
+          setError("You have already signed the guest book.");
+          return;
+        }
       }
 
-      setStatus("Saving…");
+      setStatus("Saving...");
+
       await addDoc(collection(db, "guestbook"), {
         name: name.trim(),
         message: message.trim(),
         createdAt: serverTimestamp(),
-        turnstileToken: captchaToken,
         ip: userIp || null,
+        turnstileToken: captchaToken, // NOTE: should verify server-side in real app
       });
 
       sessionStorage.setItem("guestbook_signed", "true");
+
       resetForm();
       setStatus("Thank you for signing the guest book");
+
     } catch (err) {
-      console.error("Failed to save guest book entry", err);
-      setStatus("Failed to save entry. Try again.");
+      console.error(err);
+      setError("Failed to save entry.");
     }
   };
 
@@ -139,53 +154,23 @@ const GuestBook = () => {
     setCaptchaToken(token);
   };
 
+  /* ---------------------------------- */
+  /* UI */
+  /* ---------------------------------- */
 
-  const turnstileId = useMemo(() => `turnstile-${Math.random().toString(16).slice(2)}`, []);
-
-  const turnstileRendered = useRef(false);
-  // Always reset the rendered ref and clear the container on mount/refresh
-  useEffect(() => {
-    turnstileRendered.current = false;
-    const el = document.getElementById(turnstileId);
-    if (el) el.innerHTML = "";
-  }, [turnstileId]);
-
-  useEffect(() => {
-    // Defensive: clear container before rendering
-    const el = document.getElementById(turnstileId);
-    if (el) el.innerHTML = "";
-    if (!TURNSTILE_SITEKEY) return;
-
-    // Wait for window.turnstile to be available (script may load async)
-    let cancelled = false;
-    function tryRender() {
-      if (cancelled) return;
-      if (window.turnstile) {
-        window.turnstile.render(`#${turnstileId}`, {
-          sitekey: TURNSTILE_SITEKEY,
-          callback: onTurnstileSuccess,
-        });
-        turnstileRendered.current = true;
-      } else {
-        setTimeout(tryRender, 100);
-      }
-    }
-    tryRender();
-    return () => {
-      cancelled = true;
-    };
-  }, [TURNSTILE_SITEKEY, turnstileId]);
+  const showSignedMessage =
+    hasSessionSigned || status === "Thank you for signing the guest book";
 
   return (
     <div className="w-full max-w-[600px] mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Guest Book</h1>
-      <form onSubmit={onSubmit} className="flex flex-col w-full mb-12 gap-4">
-        <div className="w-full">
-          <label className="block text-white w-full text-start mb-1" htmlFor="guest-name">
-            Name
-          </label>
+
+      <form onSubmit={onSubmit} className="flex flex-col gap-4 mb-12">
+
+        {/* NAME */}
+        <div>
+          <label className="block text-white mb-1">Name</label>
           <input
-            id="guest-name"
             maxLength={50}
             className="w-full"
             value={name}
@@ -193,61 +178,68 @@ const GuestBook = () => {
           />
         </div>
 
+        {/* MESSAGE */}
         <div>
-          <label className="block text-white w-full text-start mb-1" htmlFor="guest-message">
-            Message
-          </label>
+          <label className="block text-white mb-1">Message</label>
           <textarea
-            id="guest-message"
             value={message}
             maxLength={500}
-            placeholder="how was your stay?"
             className="w-full"
-            onChange={(e) => setMessage(e.target.value)}
             rows={4}
+            onChange={(e) => setMessage(e.target.value)}
           />
-          <p className="text-right text-white/80">{message.length}/500</p>
+          <p className="text-right text-white/80">
+            {message.length}/500
+          </p>
         </div>
 
-        <div id={turnstileId} className="flex justify-center" />
-
-       {turnstileError && <p className="text-red-600 text-center">{turnstileError}</p>} 
-      {turnstileError && <p className="text-red-600 text-center">{turnstileError}</p>}
-      {error && <p className="text-xl mt-2 text-[#8B0000] font-bold text-center">{error}</p>}
-      {status && <p className="text-sm mt-2 text-white/80">{status}</p>}
-
-      {(
-        (!canSubmit && (hasSessionSigned || error)) ||
-        status === "Thanks you for signing the guest book!"
-      ) ? (
-        <div className="text-center text-lg text-[#8B0000] font-bold py-4">
-          {status === "Thanks you for signing the guest book!"
-            ? "Thank you for signing the guest book!"
-            : "You have already signed the guest book."}
+        {/* CAPTCHA */}
+        <div className="flex justify-center">
+          <Turnstile
+            siteKey={TURNSTILE_SITEKEY}
+            onSuccess={onTurnstileSuccess}
+            onExpire={() => setCaptchaToken("")}
+            onError={() =>
+              setTurnstileError("Turnstile failed to load.")
+            }
+          />
         </div>
-      ) : (
-        <div className="flex flex-row-reverse gap-4 justify-start">  
-          <button
-            type="submit"
-            className="w-fit"
-            disabled={!canSubmit}
-          >
-            Sign
-          </button>
 
-          <button
-            type="button"
-            className="w-fit"
-            onClick={() => navigate(-1)}
-          >
-            Back
-          </button>
-        </div>
-      )}
+        {turnstileError && (
+          <p className="text-red-600 text-center">{turnstileError}</p>
+        )}
+
+        {error && (
+          <p className="text-red-700 font-bold text-center">{error}</p>
+        )}
+
+        {status && (
+          <p className="text-white/80 text-center">{status}</p>
+        )}
+
+        {/* BUTTONS / STATE */}
+        {showSignedMessage ? (
+          <div className="text-center text-lg text-red-700 font-bold py-4">
+            You have already signed the guest book.
+          </div>
+        ) : (
+          <div className="flex gap-4 justify-end">
+            <button type="submit" disabled={!canSubmit}>
+              Sign
+            </button>
+
+            <button type="button" onClick={() => navigate(-1)}>
+              Back
+            </button>
+          </div>
+        )}
       </form>
 
-      <div className="mt-8 text-center">
-        <a href="/visitors" className="text-blue-800 underline">View Guestbook</a>
+      {/* LINK */}
+      <div className="text-center">
+        <a href="/visitors" className="text-blue-800 underline">
+          View Guestbook
+        </a>
       </div>
     </div>
   );

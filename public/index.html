@@ -5,6 +5,15 @@
     <link rel="icon" href="%PUBLIC_URL%/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+    <meta http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' https://challenges.cloudflare.com;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data:;
+        connect-src 'self' https://api.ipify.org https://firestore.googleapis.com https://challenges.cloudflare.com;
+        frame-src https://challenges.cloudflare.com https://itch.io https://*.itch.io;
+      ">
     <meta
       name="description"
       content="Web site created using create-react-app"
