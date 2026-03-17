@@ -1,0 +1,9 @@
+/* Force nav links to single column at 420px and below */
+@media (max-width: 420px) {
+  .nav-mobile-single-col {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: stretch !important;
+  }
+}

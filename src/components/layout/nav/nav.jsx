@@ -5,6 +5,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import skull from "../../../assets/skull.gif";
 import coolFire from "../../../assets/fire.gif";
 import { useState } from "react";
+import "./nav.css";
 
 const Nav = () => {
   const { user, logout } = useAuth();
@@ -44,7 +45,7 @@ const Nav = () => {
           <img src={coolFire} alt="fire" className="hidden min-[1201px]:flex h-full w-full absolute z-[-2] opacity-70" />        
         )}
         <div className="p-[10px] flex flex-col min-[1201px]:flex-row">
-          <div className="grid grid-cols-2 gap-4 order-2 mt-2 pb-2 min-[600px]:flex min-[600px]:flex-wrap min-[600px]:justify-center min-[600px]:gap-8 min-[1201px]:hidden">
+          <div className="grid gap-4 order-2 mt-2 pb-2 min-[600px]:flex min-[600px]:flex-wrap min-[600px]:justify-center min-[600px]:gap-8 min-[1201px]:hidden nav-mobile-single-col">
             <Link to="/software">
               <p className={style}>Software</p>
             </Link>
