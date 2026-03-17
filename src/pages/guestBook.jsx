@@ -215,9 +215,6 @@ const GuestBook = () => {
           <p className="text-red-700 font-bold text-center">{error}</p>
         )}
 
-        {status && (
-          <p className="text-white/80 text-center">{status}</p>
-        )}
 
         {/* BUTTONS / STATE */}
         {showThankYou ? (
