@@ -68,9 +68,22 @@ const GuestBook = () => {
   };
 
   useEffect(() => {
-    loadTurnstileScript().catch(() => {
-      console.warn("Unable to load Turnstile script");
-    });
+    const isSandboxedFrame = () => {
+      try {
+        return window.self !== window.top && window.frameElement?.sandbox && !window.frameElement.sandbox.contains("allow-scripts");
+      } catch {
+        return false;
+      }
+    };
+
+    if (isSandboxedFrame()) {
+      setTurnstileError("Turnstile cannot run inside a sandboxed frame (allow-scripts is missing).");
+    } else {
+      loadTurnstileScript().catch(() => {
+        console.warn("Unable to load Turnstile script");
+      });
+    }
+
     loadEntries();
     // Fetch user IP address (do not display)
     fetch("https://api.ipify.org?format=json")
