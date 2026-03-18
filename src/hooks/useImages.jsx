@@ -40,7 +40,7 @@ export default function useImages(name = "photography") {
       try {
         const colRef = collection(db, name);
         const snapshot = await getDocs(colRef);
-        const items = snapshot.docs
+        let items = snapshot.docs
           .map((doc) => {
             const raw = doc.data() || {};
             // remove any `id` field coming from user data so we don't overwrite
@@ -55,6 +55,19 @@ export default function useImages(name = "photography") {
             }
             return true;
           });
+
+        // Sort by dateCreated descending if available
+        items = items.sort((a, b) => {
+          if (a.dateCreated && b.dateCreated) {
+            // Try to parse as ISO date, fallback to string compare
+            const aTime = Date.parse(a.dateCreated) || 0;
+            const bTime = Date.parse(b.dateCreated) || 0;
+            return bTime - aTime;
+          }
+          if (a.dateCreated) return -1;
+          if (b.dateCreated) return 1;
+          return 0;
+        });
 
         const schema = schemaMap[name];
         if (schema) {
