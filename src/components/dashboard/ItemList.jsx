@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiArrowUp, FiArrowDown } from "react-icons/fi";
 
 const ItemList = ({
   section,
@@ -8,6 +8,7 @@ const ItemList = ({
   loading,
   onEdit,
   onDelete,
+  onMovePriority,
   containerClassName,
   mediaGridClassName,
 }) => {
@@ -31,7 +32,7 @@ const ItemList = ({
         <div
           className={`grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[800px] overflow-y-auto ${mediaGridClassName}`}
         >
-          {safeItems.map((item) => (
+          {safeItems.map((item, index) => (
             <div key={item.id || item.path} className="relative group">
               <img
                 src={item.src}
@@ -58,6 +59,30 @@ const ItemList = ({
                   <FiEdit2 className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
+              {section === "software" && onMovePriority && (
+                <div className="absolute left-2 top-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onMovePriority(item, "up")}
+                    aria-label="Move item up"
+                    title="Move up"
+                    className="text-green-400 p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    disabled={index === 0}
+                  >
+                    <FiArrowUp className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onMovePriority(item, "down")}
+                    aria-label="Move item down"
+                    title="Move down"
+                    className="text-blue-400 p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    disabled={index === safeItems.length - 1}
+                  >
+                    <FiArrowDown className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

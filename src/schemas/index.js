@@ -22,6 +22,7 @@ export const softwareSchema = z.object({
   blurb: z.string().optional(),
   detailImages: z.array(z.string().url()).optional(),
   detailImagePaths: z.array(z.string()).optional(),
+  priority: z.number().optional(),
 });
 
 export const billboardSchema = z.object({

@@ -17,6 +17,13 @@ const Software = () => {
   }
 
   const sortedItems = [...items].sort((a, b) => {
+    // Sort by priority first (lower number = higher priority)
+    const aPriority = a.priority ?? Infinity;
+    const bPriority = b.priority ?? Infinity;
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+    // If priorities are equal, fall back to date
     const aDate = a.dateCreated ? new Date(a.dateCreated).getTime() : 0;
     const bDate = b.dateCreated ? new Date(b.dateCreated).getTime() : 0;
     return bDate - aDate;

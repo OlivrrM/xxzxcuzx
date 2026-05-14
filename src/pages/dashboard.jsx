@@ -789,6 +789,14 @@ const Dashboard = () => {
     };
   };
 
+  const getNextSoftwarePriority = () => {
+    if (!softwareItems || softwareItems.length === 0) return 1;
+    const maxPriority = Math.max(
+      ...softwareItems.map(item => item.priority ?? 0)
+    );
+    return maxPriority + 1;
+  };
+
   const handleSoftwareSubmit = async (e) => {
     e.preventDefault();
     if (sectionBusy.software) return;
@@ -872,6 +880,7 @@ const Dashboard = () => {
               subtext1: softwareForm.subtext1,
               subtext2: softwareForm.subtext2,
               blurb: softwareForm.blurb,
+              priority: getNextSoftwarePriority(),
               ...(uploadedDetailImages.length > 0
                 ? {
                     detailImages: uploadedDetailImages.map((entry) => entry.src),
@@ -909,6 +918,7 @@ const Dashboard = () => {
           subtext1: softwareForm.subtext1,
           subtext2: softwareForm.subtext2,
           blurb: softwareForm.blurb,
+          priority: getNextSoftwarePriority(),
           ...(uploadedDetailImages.length > 0
             ? {
                 detailImages: uploadedDetailImages.map((entry) => entry.src),
@@ -931,6 +941,60 @@ const Dashboard = () => {
       resetSoftwareForm();
     } catch (error) {
       console.error("Software submit error:", error);
+      setSectionStatus("software", `Error: ${error.message}`);
+    } finally {
+      finishSectionWork("software");
+    }
+  };
+
+  const handleSoftwareMovePriority = async (item, direction) => {
+    if (!item?.id || sectionBusy.software) return;
+
+    beginSectionWork("software", `Moving ${direction}...`);
+    try {
+      throwIfCancelled("software");
+      
+      // Get current priority, default to Infinity if not set
+      const currentPriority = item.priority ?? Infinity;
+      const allItems = softwareItems.sort((a, b) => {
+        const aPriority = a.priority ?? Infinity;
+        const bPriority = b.priority ?? Infinity;
+        return aPriority - bPriority;
+      });
+
+      // Find current item index and target item
+      const currentIndex = allItems.findIndex(i => i.id === item.id);
+      if (currentIndex === -1) return;
+
+      let targetIndex;
+      if (direction === "up") {
+        if (currentIndex === 0) return;
+        targetIndex = currentIndex - 1;
+      } else if (direction === "down") {
+        if (currentIndex === allItems.length - 1) return;
+        targetIndex = currentIndex + 1;
+      } else {
+        return;
+      }
+
+      const targetItem = allItems[targetIndex];
+      if (!targetItem?.id) return;
+
+      // Get priorities
+      const newPriority = targetItem.priority ?? Infinity;
+      const newTargetPriority = currentPriority;
+
+      // Update both items in Firestore
+      await updateDoc(doc(db, "software", item.id), { priority: newPriority });
+      throwIfCancelled("software");
+      await updateDoc(doc(db, "software", targetItem.id), { priority: newTargetPriority });
+      throwIfCancelled("software");
+
+      reloadSoftware();
+      setSectionStatus("software", `Moved ${direction}`);
+    } catch (error) {
+      if (error.name === "OperationCancelled") return;
+      console.error("Move priority error:", error);
       setSectionStatus("software", `Error: ${error.message}`);
     } finally {
       finishSectionWork("software");
@@ -1846,6 +1910,7 @@ const Dashboard = () => {
               }
             }
             onDelete={(item) => handleDelete("software", item)}
+            onMovePriority={handleSoftwareMovePriority}
           />
 
           {status.software && (
