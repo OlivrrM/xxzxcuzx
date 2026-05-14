@@ -789,6 +789,39 @@ const Dashboard = () => {
     };
   };
 
+  const calculateSoftwarePriority = (newItem) => {
+    if (!softwareItems || softwareItems.length === 0) return 1;
+    
+    // Create a list of items with dateCreated values
+    const itemsWithDate = softwareItems
+      .filter(item => item.dateCreated)
+      .map(item => ({
+        ...item,
+        dateTime: new Date(item.dateCreated).getTime()
+      }))
+      .sort((a, b) => a.dateTime - b.dateTime);
+    
+    // If new item has dateCreated, find its position in the sorted list
+    if (newItem.dateCreated) {
+      const newItemTime = new Date(newItem.dateCreated).getTime();
+      let insertPosition = 1;
+      
+      for (const item of itemsWithDate) {
+        if (item.dateTime < newItemTime) {
+          insertPosition++;
+        }
+      }
+      
+      return insertPosition;
+    }
+    
+    // If no dateCreated, assign the next available number
+    const maxPriority = Math.max(
+      ...softwareItems.map(item => item.priority ?? 0)
+    );
+    return maxPriority + 1;
+  };
+
   const getNextSoftwarePriority = () => {
     if (!softwareItems || softwareItems.length === 0) return 1;
     const maxPriority = Math.max(
@@ -880,7 +913,7 @@ const Dashboard = () => {
               subtext1: softwareForm.subtext1,
               subtext2: softwareForm.subtext2,
               blurb: softwareForm.blurb,
-              priority: getNextSoftwarePriority(),
+              priority: calculateSoftwarePriority({ dateCreated: softwareForm.dateCreated }),
               ...(uploadedDetailImages.length > 0
                 ? {
                     detailImages: uploadedDetailImages.map((entry) => entry.src),
@@ -918,7 +951,7 @@ const Dashboard = () => {
           subtext1: softwareForm.subtext1,
           subtext2: softwareForm.subtext2,
           blurb: softwareForm.blurb,
-          priority: getNextSoftwarePriority(),
+          priority: calculateSoftwarePriority({ dateCreated: softwareForm.dateCreated }),
           ...(uploadedDetailImages.length > 0
             ? {
                 detailImages: uploadedDetailImages.map((entry) => entry.src),

@@ -39,6 +39,11 @@ const ItemList = ({
                 alt={item.name || "photo"}
                 className="w-full h-36 object-cover opacity-80 hover:opacity-100"
               />
+              {section === "software" && (
+                <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm font-semibold">
+                  {index + 1}
+                </div>
+              )}
               <div className="absolute right-2 top-2 flex gap-2 flex-row-reverse">
                 <button
                   type="button"
