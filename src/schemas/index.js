@@ -38,6 +38,8 @@ export const gamesSchema = z.object({
   name: z.string(),
   src: z.string().url().optional(),
   path: z.string().optional(),
+  backGroundImageFile: z.string().url().optional(),
+  githubLink: z.string().url().optional(),
   gameType: z.string().optional(),
   borderColor: z.string().optional(),
   textColor: z.string().optional(),

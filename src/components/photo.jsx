@@ -1,9 +1,8 @@
 import { useEffect } from "react";
-import useImages from "../../hooks/useImages";
+import useImages from "../hooks/useImages";
 import { useNavigate, useParams } from "react-router";
-import arrow from "../../assets/FreeVector-3D-Arrow-Vector-Graphics.png"
-import PixiImageGlow from "../../components/PixiImageGlow";
-import kitten from "../../assets/kitten.gif"
+import arrow from "../assets/FreeVector-3D-Arrow-Vector-Graphics.png";
+import kitten from "../assets/kitten.gif";
 
 const Photo = () => {
   const { index } = useParams();

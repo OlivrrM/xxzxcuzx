@@ -1,6 +1,6 @@
 import imageCompression from "browser-image-compression";
 import { uploadFileToGitHub } from "../utils/github";
-import { gamesSchema, softwareSchema, photographySchema, billboardSchema } from "../schemas";
+import { gamesSchema, softwareSchema, photographySchema, billboardSchema } from ".";
 
 // Utilities
 const normalizeString = (value) => String(value || "").trim();
@@ -113,6 +113,8 @@ export const sectionConfigs = {
         schema: gamesSchema,
         initialForm: () => ({
             file: null,
+            backgroundImageFile: null,
+            backGroundImageFile: "",
             massFiles: [],
             editItem: null,
             name: "",
@@ -136,6 +138,7 @@ export const sectionConfigs = {
             detailImages: [],
             detailImagePaths: [],
             hackPatchLink: "",
+            githubLink: "",
             url: "",
             description: "",
         }),
@@ -151,6 +154,7 @@ export const sectionConfigs = {
                 updated: normalizeString(form.updated),
                 published: normalizeString(form.published),
                 hackPatchLink: normalizeString(form.hackPatchLink),
+                githubLink: normalizeString(form.githubLink),
                 credits: normalizeCredits(form.credits),
                 macLink: normalizeString(form.macLink),
                 iosLink: normalizeString(form.iosLink),

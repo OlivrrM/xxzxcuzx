@@ -4,7 +4,12 @@ import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import skull from "../../../assets/skull.gif";
 import coolFire from "../../../assets/fire.gif";
-import { useState } from "react";
+import balloons1 from "../../../assets/balloons1.gif";
+import balloons2 from "../../../assets/balloons2.gif";
+import starwars1 from "../../../assets/starwars1.gif";
+import starwars2 from "../../../assets/starwars2.gif";
+import mario1 from "../../../assets/mario1.gif";
+import { useEffect, useState } from "react";
 import "./nav.css";
 
 const Nav = () => {
@@ -12,17 +17,55 @@ const Nav = () => {
   const style = "text-[#ff0000] text-4xl font-bold";
   const navigate = useNavigate();
   const [showFire, setShowFire] = useState(false);
-
+  const [holiday, setHoliday] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const saved = window.localStorage.getItem("holidayOverride");
+    if (saved === "aug24" || saved === "may4" || saved === "mar10") {
+      return saved;
+    }
+    const today = new Date();
+    if (today.getMonth() === 7 && today.getDate() === 24) return "aug24";
+    if (today.getMonth() === 4 && today.getDate() === 4) return "may4";
+    if (today.getMonth() === 2 && today.getDate() === 10) return "mar10";
+    return null;
+  });
 
   const handleLogout = async () => {
     await logout();
   };
 
+  useEffect(() => {
+    const resolveHoliday = () => {
+      const saved = window.localStorage.getItem("holidayOverride");
+      if (saved === "aug24" || saved === "may4" || saved === "mar10") {
+        return saved;
+      }
+      const today = new Date();
+      if (today.getMonth() === 7 && today.getDate() === 24) return "aug24";
+      if (today.getMonth() === 4 && today.getDate() === 4) return "may4";
+      if (today.getMonth() === 2 && today.getDate() === 10) return "mar10";
+      return null;
+    };
+
+    const updateHoliday = () => setHoliday(resolveHoliday());
+
+    updateHoliday();
+    window.addEventListener("holidayOverrideChanged", updateHoliday);
+    window.addEventListener("storage", updateHoliday);
+    return () => {
+      window.removeEventListener("holidayOverrideChanged", updateHoliday);
+      window.removeEventListener("storage", updateHoliday);
+    };
+  }, []);
+
+  const skullImage = holiday === "aug24" ? balloons1 : holiday === "may4" ? starwars2 : holiday === "mar10" ? mario1 : skull;
+  const hoverFireImage = holiday === "aug24" ? balloons2 : holiday === "may4" ? starwars1 : coolFire;
+
   return (
     <nav className="relative z-10 p-2 m-4">
       {/* top-right buttons */}
       {user && (
-        <div className="fixed bottom-0 right-0 z-[1000] m-4 flex gap-6">
+        <div className="hidden min-[1201px]:fixed min-[1201px]:bottom-0 min-[1201px]:right-0 min-[1201px]:z-[1000] min-[1201px]:m-4 min-[1201px]:flex min-[1201px]:gap-6">
           <Link
             to="/dashboard"
             className="app-btn bg-black app-btn-secondary p-[3px_20px] text-white"
@@ -42,7 +85,7 @@ const Nav = () => {
       <div className="flex flex-col items-center gap-4 min-[1201px]:flex-row min-[1201px]:items-end min-[1201px]:justify-center min-[1201px]:gap-8">
 
         {showFire && (
-          <img src={coolFire} alt="fire" className="hidden min-[1201px]:flex h-full w-full absolute z-[-2] opacity-70" />        
+          <img src={hoverFireImage} alt="fire" className="hidden min-[1201px]:flex h-full w-full absolute z-[-2] opacity-70" />        
         )}
         <div className="p-[10px] flex flex-col min-[1201px]:flex-row">
           <div className="grid gap-4 order-2 mt-2 pb-2 min-[600px]:flex min-[600px]:flex-wrap min-[600px]:justify-center min-[600px]:gap-8 min-[1201px]:hidden nav-mobile-single-col">
@@ -64,7 +107,7 @@ const Nav = () => {
           <div className="hidden min-[1201px]:flex items-end justify-center gap-8 flex-wrap order-2 min-[1201px]:order-1">
             <div className="relative group">
               <img
-                src={skull}
+                src={skullImage}
                 alt="Software preview"
                 className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
               />
@@ -74,7 +117,7 @@ const Nav = () => {
             </div>
             <div className="relative group">
               <img
-                src={skull}
+                src={skullImage}
                 alt="Games preview"
                 className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
               />
@@ -100,7 +143,7 @@ const Nav = () => {
                       
             <div className="relative group">
               <img
-                src={skull}
+                src={skullImage}
                 alt="Photography preview"
                 className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
               />
@@ -110,7 +153,7 @@ const Nav = () => {
             </div>
             <div className="relative group">
               <img
-                src={skull}
+                src={skullImage}
                 alt="Contact preview"
                 className="hidden min-[1201px]:block absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-[40px] h-[40px] object-contain opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
               />

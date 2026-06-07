@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams } from "react-router";
-import { FaApple, FaSteam } from "react-icons/fa";
+import { FaApple, FaSteam, FaGithub } from "react-icons/fa";
+import Spinner from "../components/Spinner";
 import useImages from "../hooks/useImages";
 import romIcon from "../assets/rom.jpg";
 import kitten from "../assets/kitten2.gif";
@@ -67,7 +68,7 @@ const GameDetail = () => {
     return (
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-4">Game</h1>
-        <p>Loading…</p>
+        <Spinner text="Loading game..." />
       </div>
     );
   }
@@ -214,9 +215,17 @@ const GameDetail = () => {
           ) : (
             <p className="text-white/80">No download links available.</p>
           )}
+          {game.githubLink && (
+            <div className="mt-3">
+              <a href={game.githubLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-white underline">
+                <FaGithub />
+                Source on GitHub
+              </a>
+            </div>
+          )}
         </div>
 
-        {(gameMoreInfo.length > 0 || hasCredits) && (
+        {(gameMoreInfo.length > 0) && (
           <div className="pt-2 flex flex-col items-center gap-3">
             {gameMoreInfo.length > 0 && (
               <button

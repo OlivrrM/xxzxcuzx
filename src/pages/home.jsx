@@ -40,6 +40,18 @@ const Home = () => {
         loadCount();
     }, []);
 
+    useEffect(() => {
+        if (typeof clickCount === "number" && clickCount > 0 && clickCount % 100 === 0) {
+            document.body.classList.add("counter-inverted");
+        } else {
+            document.body.classList.remove("counter-inverted");
+        }
+
+        return () => {
+            document.body.classList.remove("counter-inverted");
+        };
+    }, [clickCount]);
+
     const incrementClickCount = async () => {
         setIncrementing(true);
         setCounterError("");

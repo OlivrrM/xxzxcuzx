@@ -1,4 +1,6 @@
 import React from "react";
+import Spinner from "../components/Spinner";
+import { FaGithub } from "react-icons/fa";
 import useImages from "../hooks/useImages";
 import notAvailable from "../assets/down.gif";
 import softwareGif from "../assets/software.gif";
@@ -32,7 +34,7 @@ const Software = () => {
   return (
     <div className="p-4 flex flex-col items-center w-full">
       <img src={softwareGif} alt="Software" className="text-2xl font-bold h-[150px] w-[340px] object-cover" />
-      {loading && <p>Loading…</p>}
+      {loading && <Spinner text="Loading software..." />}
       {error && <p className="text-red-600">Error loading entries</p>}
       {!loading && !error && sortedItems.length === 0 && (
         <p className="italic">No software entries yet.</p>
@@ -102,6 +104,11 @@ const Software = () => {
                       className="text-blue-400 mx-auto underline"
                     >
                       Visit project
+                    </a>
+                  )}
+                  {app.githubLink && (
+                    <a href={app.githubLink} target="_blank" rel="noopener noreferrer" className="ml-2 text-white/90">
+                      <FaGithub />
                     </a>
                   )}
                 </div>

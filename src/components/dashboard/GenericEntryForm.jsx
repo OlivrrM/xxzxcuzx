@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { photographySchema, softwareSchema, gamesSchema, billboardSchema } from "../../schemas";
 import { FaApple, FaAndroid, FaWindows, FaLinux, FaSteam, FaMobileAlt } from "react-icons/fa";
 import romIcon from "../../assets/rom.jpg";
 
@@ -27,6 +28,36 @@ const GenericEntryForm = ({
   const isGames = section === "games";
   const isSoftware = section === "software";
   const isMediaUploadSection = section === "photography" || section === "games" || section === "software" || section === "billboard";
+
+  const getSchemaForSection = () => {
+    if (isPhotography) return photographySchema;
+    if (isGames) return gamesSchema;
+    if (isSoftware) return softwareSchema;
+    if (section === "billboard") return billboardSchema;
+    return null;
+  };
+
+  const isFieldOptional = (field) => {
+    try {
+      const schema = getSchemaForSection();
+      if (!schema || !schema._def) return false;
+      // zod's shape may be a function or object depending on version
+      const shape = typeof schema._def.shape === 'function' ? schema._def.shape() : schema._def.shape;
+      const type = shape?.[field];
+      if (!type) return false;
+      const typeName = type._def?.typeName;
+      if (typeName === 'ZodOptional' || typeName === 'ZodNullable') return true;
+      if (typeName === 'ZodUnion') {
+        const options = type._def?.options || [];
+        return options.some(opt => opt._def?.typeName === 'ZodUndefined');
+      }
+      return false;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const optionalSuffix = (field) => (isFieldOptional(field) ? ' (optional)' : '');
   const normalizedGameColor = /^#[0-9A-Fa-f]{6}$/.test(formValues.textColor || "")
     ? formValues.textColor
     : "#ff0000";
@@ -76,12 +107,35 @@ const GenericEntryForm = ({
         </div>
       )}
 
+      {isGames && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-background-file`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            Background image file (optional)
+          </label>
+          <input
+            id={`${idPrefix}-background-file`}
+            type="file"
+            accept="image/*"
+            onChange={(e) => onChange("backgroundImageFile", e.target.files?.[0] || null)}
+            className="app-input w-full block"
+          />
+          {formValues.backgroundImageFile instanceof File ? (
+            <p className="text-sm text-white/80 mt-1">New background file selected</p>
+          ) : formValues.backGroundImageFile ? (
+            <p className="text-sm text-white/80 mt-1">Current background saved</p>
+          ) : null}
+        </div>
+      )}
+
       <div>
         <label
           htmlFor={`${idPrefix}-name`}
           className="block text-start text-sm font-medium mb-1"
         >
-          Name{isPhotography ? " (optional)" : ""}
+          Name{optionalSuffix('name')}
         </label>
         <input
           id={`${idPrefix}-name`}
@@ -292,6 +346,23 @@ const GenericEntryForm = ({
             </select>
           </div>
 
+          <div className="mt-3">
+            <label
+              htmlFor={`${idPrefix}-github-link`}
+              className="block text-start text-sm font-medium mb-1"
+            >
+              GitHub link (optional)
+            </label>
+            <input
+              id={`${idPrefix}-github-link`}
+              type="url"
+              value={formValues.githubLink || ""}
+              onChange={(e) => onChange("githubLink", e.target.value)}
+              className="app-input w-full"
+              placeholder="https://github.com/owner/repo"
+            />
+          </div>
+
           {(formValues.gameType === "pc games" || formValues.gameType === "hacks") && (
             <div>
               <label
@@ -480,6 +551,8 @@ const GenericEntryForm = ({
                   placeholder="https://..."
                 />
               </div>
+              
+              
             </div>
           </div>
 
@@ -652,7 +725,7 @@ const GenericEntryForm = ({
               htmlFor={`${idPrefix}-camera-model`}
               className="block text-start text-sm font-medium mb-1"
             >
-              Camera model (optional)
+              Camera model{optionalSuffix('cameraModel')}
             </label>
             <input
               id={`${idPrefix}-camera-model`}
@@ -668,7 +741,7 @@ const GenericEntryForm = ({
               htmlFor={`${idPrefix}-location`}
               className="block text-start text-sm font-medium mb-1"
             >
-              Location (optional)
+              Location{optionalSuffix('location')}
             </label>
             <input
               id={`${idPrefix}-location`}

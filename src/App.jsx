@@ -7,7 +7,7 @@ import Home from "./pages/home";
 import Games from "./pages/games";
 import GameDetail from "./pages/gameDetail";
 import Photography from "./pages/photography";
-import Photo from "./pages/photo/photo";
+import Photo from "./components/photo"
 import Contact from "./pages/contact";
 import Software from "./pages/software";
 import GuestBook from "./pages/guestBook";
@@ -17,11 +17,23 @@ import Dashboard from "./pages/dashboard";
 
 import CursorGifHover from "./components/CursorGifHover";
 import notFound from "./assets/notfound.gif";
+import { firebaseConfigMissingEnv, firebaseInitError } from "./firebase";
 
 function App() {
+  const shouldShowFirebaseError = Boolean(firebaseInitError) || firebaseConfigMissingEnv.length > 0;
+
   return (
     <div className="page-container flex flex-col min-h-screen items-center">
       <Nav />
+
+      {shouldShowFirebaseError && (
+        <div className="w-full max-w-[1200px] px-4 pt-3">
+          <div className="border border-red-700 bg-red-950/60 text-red-200 p-3 text-sm">
+            <p className="font-semibold">Firebase configuration issue detected.</p>
+            <p>{firebaseInitError || "Some Firebase environment variables are missing."}</p>
+          </div>
+        </div>
+      )}
 
       <div className="page-content max-w-[1200px] w-full flex flex-col flex-1">
         <Routes>

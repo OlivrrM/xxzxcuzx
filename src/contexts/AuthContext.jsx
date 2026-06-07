@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "../firebase";
+import { auth, firebaseInitError } from "../firebase";
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -17,6 +17,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth || firebaseInitError) {
+      setLoading(false);
+      return () => {};
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -25,10 +30,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (email, password) => {
+    if (!auth) {
+      return Promise.reject(new Error(firebaseInitError || "Firebase auth is not configured."));
+    }
     return signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = () => {
+    if (!auth) {
+      return Promise.reject(new Error(firebaseInitError || "Firebase auth is not configured."));
+    }
     return signOut(auth);
   };
 

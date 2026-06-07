@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import useImages from "../hooks/useImages";
 import Masonry from "react-masonry-css";
 import InfiniteScroll from "react-infinite-scroll-component";
+import Spinner from "../components/Spinner";
 
 import frame11_0 from "../assets/Frames/1.1/frame0.png";
 import frame11_1 from "../assets/Frames/1.1/frame1.png";
@@ -138,7 +139,7 @@ const Photography = () => {
           className="w-80 h-auto mx-auto cursor-pointer"
         />
       </button>
-      {loading && <p>Loading photographs…</p>}
+      {loading && <Spinner text="Loading photographs..." />}
       {error && <p className="text-red-600">Unable to load photographs.</p>}
 
       <div className="mx-auto m-10 p-6 overflow-x-hidden">

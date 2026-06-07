@@ -1,12 +1,13 @@
 import phone from "../assets/phone.gif";
 import mail from "../assets/mail.gif";
+import ContactGif from "../assets/contact.gif";
 
 const Contact = () => {
     return (
         <div className="p-4 w-full">
-            <div className="flex w-full mb-6">
-                <img src={mail} alt="Mail" className="w-auto h-fit" />
-                <h1 className="text-3xl font-bold mx-auto">Contact</h1>
+            <div className="flex flex-col w-full mb-6">
+                <img src={ContactGif} alt="Contact" className="w-fit font-bold mx-auto" />
+                <img src={mail} alt="Mail" className="w-[40px] h-fit" />
             </div>
             <form
                 action="https://formspree.io/f/xreyzdoz"
@@ -64,7 +65,7 @@ const Contact = () => {
                 </div>
             </form>
 
-            <p className="text-[#ff0000] text-xl font-bold text-center">Call my ass up</p>
+            <p className="text-[#ff0000] text-xl font-bold text-center">Call me up</p>
             <img src={phone} alt="Phone" className="w-50 h-auto mt-2 mx-auto" />
 
         </div>

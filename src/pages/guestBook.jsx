@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { Turnstile } from "@marsidev/react-turnstile";
+import Spinner from "../components/Spinner";
 
 const TURNSTILE_SITEKEY = process.env.REACT_APP_TURNSTILE_SITEKEY || "";
 
@@ -167,6 +168,10 @@ const GuestBook = () => {
     <div className="w-full max-w-[600px] mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Guest Book</h1>
 
+      {loadingEntries && <Spinner text="Loading guest book..." />}
+
+      {!loadingEntries && (
+
       <form onSubmit={onSubmit} className="flex flex-col gap-4 mb-12">
 
         {/* NAME */}
@@ -216,27 +221,28 @@ const GuestBook = () => {
         )}
 
 
-        {/* BUTTONS / STATE */}
-        {showThankYou ? (
-          <div className="text-center text-lg text-green-700 font-bold py-4">
-            Thank you for signing the guest book.
-          </div>
-        ) : showAlreadySigned ? (
-          <div className="text-center text-lg text-red-700 font-bold py-4">
-            You have already signed the guest book.
-          </div>
-        ) : (
-          <div className="flex gap-4 justify-end">
-            <button type="submit" disabled={!canSubmit}>
-              Sign
-            </button>
+          {/* BUTTONS / STATE */}
+          {showThankYou ? (
+            <div className="text-center text-lg text-green-700 font-bold py-4">
+              Thank you for signing the guest book.
+            </div>
+          ) : showAlreadySigned ? (
+            <div className="text-center text-lg text-red-700 font-bold py-4">
+              You have already signed the guest book.
+            </div>
+          ) : (
+            <div className="flex gap-4 justify-end">
+              <button type="submit" disabled={!canSubmit}>
+                Sign
+              </button>
 
-            <button type="button" onClick={() => navigate(-1)}>
-              Back
-            </button>
-          </div>
+              <button type="button" onClick={() => navigate(-1)}>
+                Back
+              </button>
+            </div>
+          )}
+        </form>
         )}
-      </form>
 
       {/* LINK */}
       <div className="text-center">

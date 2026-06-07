@@ -45,6 +45,11 @@ button:disabled, select:disabled, input:disabled, textarea:disabled
   cursor: not-allowed;
 }
 
+body.counter-inverted {
+  filter: invert(1);
+  background-image: url("../../public/Images/background_inverted.png");
+}
+
 select, textarea, input{
   background-color: black;
   color: white;

@@ -15,7 +15,7 @@ import {
   normalizeCredits,
   compressAndUploadFile,
   uploadDetailImages,
-} from "./dashboardConfig";
+} from "../schemas/dashboardConfig";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -70,10 +70,11 @@ const Dashboard = () => {
   const [photoForm, setPhotoForm] = useState(sectionConfigs.photography.initialForm());
   const [softwareForm, setSoftwareForm] = useState(sectionConfigs.software.initialForm());
   const [gamesForm, setGamesForm] = useState(sectionConfigs.games.initialForm());
+  const [billboardForm, setBillboardForm] = useState(sectionConfigs.billboard.initialForm());
+
+  console.log("[Inital games form] ", gamesForm);
 
   const isValidHexColor = (value) => /^#[0-9A-Fa-f]{6}$/.test(value || "");
-
-  const [billboardForm, setBillboardForm] = useState(sectionConfigs.billboard.initialForm());
 
   useEffect(() => {
     if (!user) {
@@ -369,6 +370,8 @@ const Dashboard = () => {
     setGamesForm((prev) => ({
       ...prev,
       file: null,
+      backgroundImageFile: null,
+      backGroundImageFile: "",
       massFiles: [],
       name: "",
       gameType: "",
@@ -441,6 +444,8 @@ const Dashboard = () => {
     setGamesForm((prev) => ({
       ...prev,
       file: null,
+      backgroundImageFile: null,
+      backGroundImageFile: gamesEditSnapshot.backGroundImageFile || "",
       massFiles: [],
       ...gamesEditSnapshot,
     }));
@@ -620,6 +625,14 @@ const Dashboard = () => {
       ...prev,
       file: singleFile,
       massFiles: [],
+    }));
+  };
+
+  const handleGamesBackgroundImageSelect = (e) => {
+    const file = e.target.files?.[0] || null;
+    setGamesForm((prev) => ({
+      ...prev,
+      backgroundImageFile: file,
     }));
   };
 
@@ -1065,6 +1078,22 @@ const Dashboard = () => {
           ];
         }
 
+        if (gamesForm.backgroundImageFile instanceof File) {
+          setSectionStatus("games", "Uploading background image...");
+          const backgroundPath = `games/backgrounds/${Date.now()}_${gamesForm.backgroundImageFile.name}`;
+          const backgroundSrc = await compressAndUploadFile(gamesForm.backgroundImageFile, backgroundPath);
+          throwIfCancelled("games");
+          updates.backGroundImageFile = backgroundSrc;
+          
+          if (gamesForm.editItem?.backgroundImagePath) {
+            try {
+              await deleteFileFromGitHub(gamesForm.editItem.backgroundImagePath);
+            } catch (error) {
+              console.warn("Failed to delete old background image from GitHub", error);
+            }
+          }
+        }
+
         if (gamesForm.file) {
           setSectionStatus("games", "Uploading replacement image...");
           const replacementPath = `games/${Date.now()}_${gamesForm.file.name}`;
@@ -1101,11 +1130,21 @@ const Dashboard = () => {
               uploadedDetailImages = await uploadGamesDetailImages(gamesForm.detailFiles);
               throwIfCancelled("games");
             }
+            
+            let backgroundSrc = undefined;
+            if (gamesForm.backgroundImageFile instanceof File) {
+              setSectionStatus("games", "Uploading background image...");
+              const backgroundPath = `games/backgrounds/${Date.now()}_${gamesForm.backgroundImageFile.name}`;
+              backgroundSrc = await compressAndUploadFile(gamesForm.backgroundImageFile, backgroundPath);
+              throwIfCancelled("games");
+            }
+            
             await addItem("games", {
               ...sectionConfigs.games.buildPayload(gamesForm),
               name: gamesForm.name || file.name,
               src,
               path,
+              ...(backgroundSrc ? { backGroundImageFile: backgroundSrc } : {}),
               ...(uploadedDetailImages.length > 0
                 ? sectionConfigs.games.mergeDetailImages(
                     gamesForm.detailImages,
@@ -1130,11 +1169,21 @@ const Dashboard = () => {
           uploadedDetailImages = await uploadGamesDetailImages(gamesForm.detailFiles);
           throwIfCancelled("games");
         }
+        
+        let backgroundSrc = undefined;
+        if (gamesForm.backgroundImageFile instanceof File) {
+          setSectionStatus("games", "Uploading background image...");
+          const backgroundPath = `games/backgrounds/${Date.now()}_${gamesForm.backgroundImageFile.name}`;
+          backgroundSrc = await compressAndUploadFile(gamesForm.backgroundImageFile, backgroundPath);
+          throwIfCancelled("games");
+        }
+        
         await addItem("games", {
           ...sectionConfigs.games.buildPayload(gamesForm),
           name: gamesForm.name || gamesForm.file.name,
           src,
           path,
+          ...(backgroundSrc ? { backGroundImageFile: backgroundSrc } : {}),
           ...(uploadedDetailImages.length > 0
             ? sectionConfigs.games.mergeDetailImages(
                 gamesForm.detailImages,
@@ -1414,6 +1463,7 @@ const Dashboard = () => {
         gamesForm.releasedStatus === gamesEditSnapshot.releasedStatus &&
         gamesForm.updated === gamesEditSnapshot.updated &&
         gamesForm.published === gamesEditSnapshot.published &&
+        gamesForm.githubLink === gamesEditSnapshot.githubLink &&
         areCreditsEqual(gamesForm.credits, gamesEditSnapshot.credits) &&
         !gamesForm.creditName &&
         !gamesForm.creditRole &&
@@ -1422,6 +1472,7 @@ const Dashboard = () => {
         gamesForm.url === gamesEditSnapshot.url &&
         gamesForm.description === gamesEditSnapshot.description &&
         !gamesForm.file &&
+        !gamesForm.backgroundImageFile &&
         gamesForm.massFiles.length === 0
       )
     :
@@ -2020,10 +2071,13 @@ const Dashboard = () => {
                     hackPatchLink: item.hackPatchLink || "",
                     url: item.url || "",
                     description: item.description || "",
+                    backGroundImageFile: item.backGroundImageFile || "",
                   };
                   setGamesEditSnapshot(snapshot);
                   setGamesForm({
                     file: null,
+                    backgroundImageFile: null,
+                    backGroundImageFile: item.backGroundImageFile || "",
                     massFiles: [],
                     editItem: item,
                     ...snapshot,
