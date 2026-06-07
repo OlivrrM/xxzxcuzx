@@ -76,11 +76,11 @@ const Games = () => {
             { label: "Published", value: game.published },
           ].filter((item) => Boolean(item.value));
           const imageSrc = game.src || (game.detailImages && game.detailImages[0]);
-            const rawEmbed = String(game.url || "").trim();
-            const gameType = String(game.gameType || "").toLowerCase();
-            const canRenderEmbed = gameType === "web games" && Boolean(rawEmbed);
+          const rawEmbed = String(game.url || "").trim();
+          const gameType = String(game.gameType || "").toLowerCase();
+          const canRenderEmbed = gameType === "web games" && Boolean(rawEmbed);
 
-            const platformLinks = [
+          const platformLinks = [
               { key: "macLink", icon: FaApple, label: "macOS" },
               { key: "iosLink", imageSrc: iosIcon, label: "iOS" },
               { key: "androidLink", imageSrc: androidIcon, label: "Android" },
@@ -88,14 +88,21 @@ const Games = () => {
               { key: "linuxLink", imageSrc: linuxIcon, label: "Linux" },
               { key: "steamLink", icon: FaSteam, label: "Steam" },
               { key: "romhackingLink", imageSrc: romIcon, label: "Romhacking" },
-            ].filter((item) => Boolean(game[item.key]));
+            ]
+              .map((item) => ({
+                ...item,
+                link: String(game[item.key] || "").trim(),
+              }))
+              .filter((item) => item.link.length > 0);
+          
+              const hasPlatformLinks = platformLinks.length > 0;
 
           return (
             <li key={game.id} className="w-full">
               <div 
                 onMouseEnter={() => setHoveredGameId(game.id)}
                 onMouseLeave={() => setHoveredGameId(null)}
-                className="p-4 flex flex-col md:flex-row items-stretch gap-4 relative overflow-hidden" 
+                className={`p-4 flex flex-col ${isReversed ? 'md:flex-row-reverse' : 'md:flex-row'} items-stretch gap-4 relative overflow-hidden`} 
                 style={{
                   ...(game.borderColor ? { border: `2px solid ${game.borderColor}` } : {}),
                   backgroundColor: 'black',
@@ -118,10 +125,10 @@ const Games = () => {
                 </div>
                 <div className="absolute inset-0 pointer-events-none"></div>
 
-                <div id="test" className={`w-fit flex flex-col ${isReversed ? 'md:flex-row-reverse' : 'md:flex-row'} relative z-10 ${isReversed ? 'md:order-2' : 'md:order-1'}`}>
-                  <div className={`w-full md:w-[260px] flex items-center justify-center p-2 ${isReversed ? 'md:order-2' : 'md:order-1'}`}>
+                <div id="test" className={`w-fit flex flex-col md:flex-row relative z-10`}>
+                  <div className={`w-full md:w-[260px] flex items-center justify-center p-2 ${isReversed ? 'md:order-2 md:ml-4' : 'md:order-1 md:mr-2'}`}>
                     {imageSrc ? (
-                      <img src={imageSrc} alt={game.name || "Game"} className="w-full md:mr-4 h-auto object-cover border"
+                      <img src={imageSrc} alt={game.name || "Game"} className="w-full h-auto object-cover border"
                         style={{
                           borderColor: game.borderColor || "#fff",
                           borderWidth: "2px",
@@ -133,13 +140,15 @@ const Games = () => {
                     )}
                   </div>
 
-                  <div className={`w-full md:w-auto flex flex-row md:flex-col items-start md:items-center justify-start gap-[21px] pt-2 ${isReversed ? 'md:order-1 md:mr-4' : 'md:order-2'}`}>
-                    {platformLinks.map(({ key, icon: Icon, imageSrc, label }) => (
-                      <a key={key} href={game[key]} target="_blank" rel="noopener noreferrer" title={label} className="block">
-                        {Icon ? <Icon className="text-white/80" size="20" /> : <img src={imageSrc} alt={label} className="w-6 h-6 object-cover opacity-80" />}
-                      </a>
-                    ))}
-                  </div>
+                  {hasPlatformLinks && (
+                    <div className={`w-full md:w-auto flex flex-row md:flex-col items-center md:items-center justify-center gap-[21px] pt-2 ${isReversed ? 'md:order-1' : 'md:order-2'}`}>
+                      {platformLinks.map(({ key, icon: Icon, imageSrc, label, link }) => (
+                        <a key={key} href={link} target="_blank" rel="noopener noreferrer" title={label} className="block">
+                          {Icon ? <Icon className="text-white/80" size="20" /> : <img src={imageSrc} alt={label} className="w-6 h-6 object-cover opacity-80" />}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className={`flex-1 flex flex-col justify-between ${isReversed ? 'md:order-1' : 'md:order-2'} text-left relative z-10`}>
@@ -202,38 +211,66 @@ const Games = () => {
       </ul>
 
       {activeCreditsGame && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="relative bg-black/90 text-white max-w-lg w-full rounded p-6 mx-4">
-            <button onClick={closeCredits} className="absolute top-3 right-3 text-white shadow-none text-2xl leading-none">×</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <button
+            onClick={closeCredits}
+            className="fixed top-4 right-4 z-[60] text-white text-4xl leading-none hover:opacity-80"
+            aria-label="Close credits"
+          >
+            ×
+          </button>
+
+          <div className="bg-black/90 text-white max-w-lg w-full max-h-[90vh] overflow-y-auto rounded p-6 border border-white">
             <h2 className="text-xl font-bold mb-4">Credits</h2>
+
             <div className="space-y-3">
-              {Array.isArray(activeCreditsGame.credits) && activeCreditsGame.credits.map((c, i) => (
-                <div key={i} className="border-b border-white/10 pb-2">
-                  <div className="font-semibold">{c.name}</div>
-                  <div className="text-sm text-white/70">{c.role}</div>
-                </div>
-              ))}
+              {Array.isArray(activeCreditsGame.credits) &&
+                activeCreditsGame.credits.map((c, i) => (
+                  <div key={i} className="border-b border-white/10 pb-2">
+                    <div className="font-semibold">{c.name}</div>
+                    <div className="text-sm text-white/70">{c.role}</div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
       )}
 
       {activeMoreInfoGame && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="relative bg-black/90 text-white max-w-lg w-full rounded p-6 mx-4">
-            <button onClick={closeMoreInfo} className="absolute top-3 right-3 text-white text-2xl shadow-none leading-none">×</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <button
+            onClick={closeMoreInfo}
+            className="fixed top-4 right-4 z-[60] text-white text-4xl leading-none hover:opacity-80"
+            aria-label="Close more information"
+          >
+            ×
+          </button>
+
+          <div className="bg-black/90 text-white max-w-lg w-full max-h-[90vh] overflow-y-auto rounded p-6 border border-white">
             <h2 className="text-xl font-bold mb-4">More Information</h2>
+
             <div className="space-y-3">
               {[
-                { label: 'Released status', value: formatStatus(activeMoreInfoGame.releasedStatus) },
-                { label: 'Updated', value: activeMoreInfoGame.updated },
-                { label: 'Published', value: activeMoreInfoGame.published },
-              ].filter(item => Boolean(item.value)).map((item, idx) => (
-                <div key={idx} className="border-b border-white/10 pb-2">
-                  <div className="font-semibold">{item.label}</div>
-                  <div className="text-sm text-white/70">{item.value}</div>
-                </div>
-              ))}
+                {
+                  label: "Released status",
+                  value: formatStatus(activeMoreInfoGame.releasedStatus),
+                },
+                {
+                  label: "Updated",
+                  value: activeMoreInfoGame.updated,
+                },
+                {
+                  label: "Published",
+                  value: activeMoreInfoGame.published,
+                },
+              ]
+                .filter((item) => Boolean(item.value))
+                .map((item, idx) => (
+                  <div key={idx} className="border-b border-white/10 pb-2">
+                    <div className="font-semibold">{item.label}</div>
+                    <div className="text-sm text-white/70">{item.value}</div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
