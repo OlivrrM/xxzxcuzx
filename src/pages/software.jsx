@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Spinner from "../components/Spinner";
 import { FaGithub } from "react-icons/fa";
 import useImages from "../hooks/useImages";
@@ -8,6 +8,8 @@ import floppyGif from "../assets/floppy.gif";
 
 const Software = () => {
   const { data: items, loading, error } = useImages("software");
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
   const disabled = false;
 
   if (disabled) {
@@ -31,6 +33,14 @@ const Software = () => {
     return bDate - aDate;
   });
 
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize));
+
+  useEffect(() => {
+    setPage(1);
+  }, [sortedItems.length]);
+
+  const visibleItems = sortedItems.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="p-4 flex flex-col items-center w-full">
       <img src={softwareGif} alt="Software" className="text-2xl font-bold h-[150px] w-[340px] object-cover" />
@@ -40,7 +50,7 @@ const Software = () => {
         <p className="italic">No software entries yet.</p>
       )}
       <ul className="space-y-6">
-        {sortedItems.map((app, index) => {
+        {visibleItems.map((app, index) => {
           const isReversed = index % 2 === 1;
           const imageSrc = app.src || (app.detailImages && app.detailImages[0]);
 
@@ -117,6 +127,31 @@ const Software = () => {
           );
         })}
       </ul>
+      {totalPages > 1 && (
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm text-white/70">
+            Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, sortedItems.length)} of {sortedItems.length} software items
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="app-btn app-btn-secondary"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+              className="app-btn app-btn-secondary"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

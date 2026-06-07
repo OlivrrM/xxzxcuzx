@@ -21,6 +21,7 @@ const ItemList = ({
     photography: "Photos",
     games: "Games",
     software: "Software",
+    billboard: "Billboard",
     placeHolder: "Place Holder",
   };
   const listTitle = sectionTitles[section] || "Items";
@@ -39,7 +40,7 @@ const ItemList = ({
                 alt={item.name || "photo"}
                 className="w-full h-36 object-cover opacity-80 hover:opacity-100"
               />
-              {section === "software" && (
+              {(section === "software" || section === "games") && (
                 <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm font-semibold">
                   {index + 1}
                 </div>
@@ -64,15 +65,14 @@ const ItemList = ({
                   <FiEdit2 className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
-              {section === "software" && onMovePriority && (
-                <div className="absolute left-2 top-2 flex gap-2">
+              {(section === "software" || section === "games") && onMovePriority && (
+                <div className="absolute left-2 top-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   <button
                     type="button"
                     onClick={() => onMovePriority(item, "up")}
                     aria-label="Move item up"
                     title="Move up"
-                    className="text-green-400 p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                    disabled={index === 0}
+                    className="text-green-400 p-1 text-xs focus:outline-none"
                   >
                     <FiArrowUp className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -81,8 +81,7 @@ const ItemList = ({
                     onClick={() => onMovePriority(item, "down")}
                     aria-label="Move item down"
                     title="Move down"
-                    className="text-blue-400 p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                    disabled={index === safeItems.length - 1}
+                    className="text-blue-400 p-1 text-xs focus:outline-none"
                   >
                     <FiArrowDown className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -141,7 +140,7 @@ const ItemList = ({
 };
 
 ItemList.propTypes = {
-  section: PropTypes.oneOf(["photography", "software", "games", "placeHolder"]).isRequired,
+  section: PropTypes.oneOf(["photography", "software", "games", "billboard", "placeHolder"]).isRequired,
   items: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string,

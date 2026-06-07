@@ -121,6 +121,10 @@ const Dashboard = () => {
   const [softwareEditSnapshot, setSoftwareEditSnapshot] = useState(null);
   const [gamesEditSnapshot, setGamesEditSnapshot] = useState(null);
   const [billboardEditSnapshot, setBillboardEditSnapshot] = useState(null);
+  const [photoPage, setPhotoPage] = useState(1);
+  const [gamesPage, setGamesPage] = useState(1);
+  const [softwarePage, setSoftwarePage] = useState(1);
+  const [billboardPage, setBillboardPage] = useState(1);
   const [photoDateSource, setPhotoDateSource] = useState("created");
   const [photoUploadMode, setPhotoUploadMode] = useState("single");
   const [photoMassMeta, setPhotoMassMeta] = useState([]);
@@ -335,6 +339,44 @@ const Dashboard = () => {
     setPhotoUploadMode("single");
     setPhotoTransferDate("");
   };
+
+  const sortByPriority = (items) =>
+    [...(items || [])].sort((a, b) => {
+      const aPriority = a.priority ?? Infinity;
+      const bPriority = b.priority ?? Infinity;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      return (a.id || "").localeCompare(b.id || "");
+    });
+
+  const normalizePriorityItems = (items) =>
+    sortByPriority(items).map((entry, index) => ({
+      ...entry,
+      priority: entry.priority != null ? entry.priority : index + 1,
+    }));
+
+  const softwareItemsSorted = sortByPriority(softwareItems);
+  const gamesItemsSorted = sortByPriority(gamesItems);
+
+  const photoPageCount = Math.max(1, Math.ceil((photographyItems?.length || 0) / 24));
+  const gamesPageCount = Math.max(1, Math.ceil((gamesItemsSorted.length || 0) / 12));
+  const softwarePageCount = Math.max(1, Math.ceil((softwareItemsSorted.length || 0) / 6));
+  const billboardPageCount = Math.max(1, Math.ceil((billboardItems?.length || 0) / 18));
+
+  useEffect(() => {
+    setPhotoPage((current) => Math.min(current, photoPageCount));
+  }, [photoPageCount]);
+
+  useEffect(() => {
+    setGamesPage((current) => Math.min(current, gamesPageCount));
+  }, [gamesPageCount]);
+
+  useEffect(() => {
+    setSoftwarePage((current) => Math.min(current, softwarePageCount));
+  }, [softwarePageCount]);
+
+  useEffect(() => {
+    setBillboardPage((current) => Math.min(current, billboardPageCount));
+  }, [billboardPageCount]);
 
   const resetSoftwareForm = () => {
     setSoftwareForm(sectionConfigs.software.initialForm());
@@ -843,6 +885,32 @@ const Dashboard = () => {
     return maxPriority + 1;
   };
 
+  const calculateGamesPriority = (newItem) => {
+    if (!gamesItems || gamesItems.length === 0) return 1;
+
+    const itemsWithDate = gamesItems
+      .filter((item) => item.dateCreated)
+      .map((item) => ({
+        ...item,
+        dateTime: new Date(item.dateCreated).getTime(),
+      }))
+      .sort((a, b) => a.dateTime - b.dateTime);
+
+    if (newItem.dateCreated) {
+      const newItemTime = new Date(newItem.dateCreated).getTime();
+      let insertPosition = 1;
+      for (const item of itemsWithDate) {
+        if (item.dateTime < newItemTime) {
+          insertPosition++;
+        }
+      }
+      return insertPosition;
+    }
+
+    const maxPriority = Math.max(...gamesItems.map((item) => item.priority ?? 0));
+    return maxPriority + 1;
+  };
+
   const handleSoftwareSubmit = async (e) => {
     e.preventDefault();
     if (sectionBusy.software) return;
@@ -1000,16 +1068,10 @@ const Dashboard = () => {
     try {
       throwIfCancelled("software");
       
-      // Get current priority, default to Infinity if not set
-      const currentPriority = item.priority ?? Infinity;
-      const allItems = softwareItems.sort((a, b) => {
-        const aPriority = a.priority ?? Infinity;
-        const bPriority = b.priority ?? Infinity;
-        return aPriority - bPriority;
-      });
+      const orderedItems = normalizePriorityItems(softwareItems);
 
       // Find current item index and target item
-      const currentIndex = allItems.findIndex(i => i.id === item.id);
+      const currentIndex = orderedItems.findIndex((i) => i.id === item.id);
       if (currentIndex === -1) return;
 
       let targetIndex;
@@ -1017,18 +1079,18 @@ const Dashboard = () => {
         if (currentIndex === 0) return;
         targetIndex = currentIndex - 1;
       } else if (direction === "down") {
-        if (currentIndex === allItems.length - 1) return;
+        if (currentIndex === orderedItems.length - 1) return;
         targetIndex = currentIndex + 1;
       } else {
         return;
       }
 
-      const targetItem = allItems[targetIndex];
+      const targetItem = orderedItems[targetIndex];
       if (!targetItem?.id) return;
 
       // Get priorities
-      const newPriority = targetItem.priority ?? Infinity;
-      const newTargetPriority = currentPriority;
+      const newPriority = targetItem.priority;
+      const newTargetPriority = orderedItems[currentIndex].priority;
 
       // Update both items in Firestore
       await updateDoc(doc(db, "software", item.id), { priority: newPriority });
@@ -1152,6 +1214,7 @@ const Dashboard = () => {
                     uploadedDetailImages
                   )
                 : {}),
+              priority: calculateGamesPriority({ dateCreated: gamesForm.dateCreated }),
             });
           }
           return;
@@ -1191,6 +1254,7 @@ const Dashboard = () => {
                 uploadedDetailImages
               )
             : {}),
+          priority: calculateGamesPriority({ dateCreated: gamesForm.dateCreated }),
         });
       };
 
@@ -1212,6 +1276,51 @@ const Dashboard = () => {
       } else {
         setSectionStatus("games", `Error: ${error.message}`);
       }
+    } finally {
+      finishSectionWork("games");
+    }
+  };
+
+  const handleGamesMovePriority = async (item, direction) => {
+    if (!item?.id || sectionBusy.games) return;
+
+    beginSectionWork("games", `Moving ${direction}...`);
+    try {
+      throwIfCancelled("games");
+
+      const orderedItems = normalizePriorityItems(gamesItems);
+
+      const currentIndex = orderedItems.findIndex((i) => i.id === item.id);
+      if (currentIndex === -1) return;
+
+      let targetIndex;
+      if (direction === "up") {
+        if (currentIndex === 0) return;
+        targetIndex = currentIndex - 1;
+      } else if (direction === "down") {
+        if (currentIndex === orderedItems.length - 1) return;
+        targetIndex = currentIndex + 1;
+      } else {
+        return;
+      }
+
+      const targetItem = orderedItems[targetIndex];
+      if (!targetItem?.id) return;
+
+      const newPriority = targetItem.priority;
+      const newTargetPriority = orderedItems[currentIndex].priority;
+
+      await updateDoc(doc(db, "games", item.id), { priority: newPriority });
+      throwIfCancelled("games");
+      await updateDoc(doc(db, "games", targetItem.id), { priority: newTargetPriority });
+      throwIfCancelled("games");
+
+      reloadGames();
+      setSectionStatus("games", `Moved ${direction}`);
+    } catch (error) {
+      if (error.name === "OperationCancelled") return;
+      console.error("Move priority error:", error);
+      setSectionStatus("games", `Error: ${error.message}`);
     } finally {
       finishSectionWork("games");
     }
@@ -1901,7 +2010,7 @@ const Dashboard = () => {
 
           <ItemList
             section="photography"
-            items={photographyItems}
+            items={photographyItems?.slice((photoPage - 1) * 24, photoPage * 24) || []}
             loading={photographyLoading}
             onEdit={(item) =>
               {
@@ -1926,6 +2035,32 @@ const Dashboard = () => {
             containerClassName="flex flex-col flex-1 min-h-0"
             mediaGridClassName="max-h-none flex-1 min-h-0"
           />
+
+          {photoPageCount > 1 && (
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-white/70">
+                Showing {(photoPage - 1) * 24 + 1} - {Math.min(photoPage * 24, photographyItems?.length || 0)} of {photographyItems?.length || 0} photos
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPhotoPage(Math.max(1, photoPage - 1))}
+                  disabled={photoPage === 1}
+                  className="app-btn app-btn-secondary"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhotoPage(Math.min(photoPageCount, photoPage + 1))}
+                  disabled={photoPage === photoPageCount}
+                  className="app-btn app-btn-secondary"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
 
           {status.photography && (
             <p className="mt-3 text-sm text-green-300">{status.photography}</p>
@@ -1973,7 +2108,7 @@ const Dashboard = () => {
 
           <ItemList
             section="software"
-            items={softwareItems}
+            items={softwareItemsSorted.slice((softwarePage - 1) * 6, softwarePage * 6) || []}
             loading={softwareLoading}
             onEdit={(item) =>
               {
@@ -1996,6 +2131,32 @@ const Dashboard = () => {
             onDelete={(item) => handleDelete("software", item)}
             onMovePriority={handleSoftwareMovePriority}
           />
+
+          {softwarePageCount > 1 && (
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-white/70">
+                Showing {(softwarePage - 1) * 6 + 1} - {Math.min(softwarePage * 6, softwareItems?.length || 0)} of {softwareItems?.length || 0} software items
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSoftwarePage(Math.max(1, softwarePage - 1))}
+                  disabled={softwarePage === 1}
+                  className="app-btn app-btn-secondary"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSoftwarePage(Math.min(softwarePageCount, softwarePage + 1))}
+                  disabled={softwarePage === softwarePageCount}
+                  className="app-btn app-btn-secondary"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
 
           {status.software && (
             <p className={`mt-3 text-sm ${getStatusClass(status.software)}`}>
@@ -2041,7 +2202,7 @@ const Dashboard = () => {
 
             <ItemList
               section="games"
-              items={gamesItems}
+              items={gamesItemsSorted.slice((gamesPage - 1) * 12, gamesPage * 12) || []}
               loading={gamesLoading}
               onEdit={(item) =>
                 {
@@ -2085,8 +2246,35 @@ const Dashboard = () => {
                 }
               }
               onDelete={(item) => handleDelete("games", item)}
+              onMovePriority={handleGamesMovePriority}
               mediaGridClassName="max-h-[200px]"
             />
+
+            {gamesPageCount > 1 && (
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-sm text-white/70">
+                  Showing {(gamesPage - 1) * 12 + 1} - {Math.min(gamesPage * 12, gamesItems?.length || 0)} of {gamesItems?.length || 0} games
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGamesPage(Math.max(1, gamesPage - 1))}
+                    disabled={gamesPage === 1}
+                    className="app-btn app-btn-secondary"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGamesPage(Math.min(gamesPageCount, gamesPage + 1))}
+                    disabled={gamesPage === gamesPageCount}
+                    className="app-btn app-btn-secondary"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
 
             {status.games && <p className="mt-3 text-sm text-green-300">{status.games}</p>}
             {gamesError && <p className="mt-2 text-red-400">{gamesError.message}</p>}
@@ -2130,7 +2318,7 @@ const Dashboard = () => {
 
           <ItemList
             section="billboard"
-            items={billboardItems}
+            items={billboardItems?.slice((billboardPage - 1) * 18, billboardPage * 18) || []}
             loading={billboardLoading}
             onEdit={(item) =>
               {
@@ -2146,6 +2334,32 @@ const Dashboard = () => {
             }
             onDelete={(item) => handleDelete("billboard", item)}
           />
+
+          {billboardPageCount > 1 && (
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-white/70">
+                Showing {(billboardPage - 1) * 18 + 1} - {Math.min(billboardPage * 18, billboardItems?.length || 0)} of {billboardItems?.length || 0} billboard items
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBillboardPage(Math.max(1, billboardPage - 1))}
+                  disabled={billboardPage === 1}
+                  className="app-btn app-btn-secondary"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillboardPage(Math.min(billboardPageCount, billboardPage + 1))}
+                  disabled={billboardPage === billboardPageCount}
+                  className="app-btn app-btn-secondary"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
 
           {status.billboard && (
             <p className="mt-3 text-sm text-green-300">{status.billboard}</p>

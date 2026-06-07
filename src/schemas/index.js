@@ -67,4 +67,5 @@ export const gamesSchema = z.object({
   linuxLink: z.string().optional(),
   steamLink: z.string().optional(),
   romhackingLink: z.string().optional(),
+  priority: z.number().optional(),
 });

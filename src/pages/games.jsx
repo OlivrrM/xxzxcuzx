@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import useImages from "../hooks/useImages";
 import floppyGif from "../assets/floppy.gif";
@@ -32,6 +32,8 @@ const Games = () => {
   const [activeCreditsId, setActiveCreditsId] = useState(null);
   const [activeMoreInfoId, setActiveMoreInfoId] = useState(null);
   const [hoveredGameId, setHoveredGameId] = useState(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
 
   const openCredits = (id) => setActiveCreditsId(id);
   const closeCredits = () => setActiveCreditsId(null);
@@ -48,6 +50,13 @@ const Games = () => {
   });
 
   const navigate = useNavigate();
+  const totalPages = Math.max(1, Math.ceil(sortedGames.length / pageSize));
+
+  useEffect(() => {
+    setPage(1);
+  }, [sortedGames.length]);
+
+  const visibleGames = sortedGames.slice((page - 1) * pageSize, page * pageSize);
 
   const activeCreditsGame = activeCreditsId ? games.find((g) => g.id === activeCreditsId) : null;
   const activeMoreInfoGame = activeMoreInfoId ? games.find((g) => g.id === activeMoreInfoId) : null;
@@ -65,7 +74,7 @@ const Games = () => {
       )}
 
       <ul className="space-y-6 w-full">
-          {sortedGames.map((game, index) => {
+          {visibleGames.map((game, index) => {
           const isReversed = index % 2 === 1;
 
           console.log("GAME TYPE: ", game.gameType);
@@ -129,6 +138,7 @@ const Games = () => {
                   <div className={`w-full md:w-[260px] flex items-center justify-center p-2 ${isReversed ? 'md:order-2 md:ml-4' : 'md:order-1 md:mr-2'}`}>
                     {imageSrc ? (
                       <img src={imageSrc} alt={game.name || "Game"} className="w-full h-auto object-cover border"
+                        onClick={() => navigate(`/games/${encodeURIComponent(slugify(game.name))}`)}  
                         style={{
                           borderColor: game.borderColor || "#fff",
                           borderWidth: "2px",
@@ -181,7 +191,7 @@ const Games = () => {
                     {game.githubLink && (
                       <div className="flex justify-start md:justify-center">
                         {game.gameType === "hacks" ? (
-                          <img src={romIcon} className="w-5 h-5" alt="Visit Project" />) : (
+                          <p className="text-blue-700">Patch Now</p>) : (
                             <a
                               href={game.githubLink}
                               target="_blank"
@@ -209,6 +219,31 @@ const Games = () => {
           );
         })}
       </ul>
+      {totalPages > 1 && (
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm text-white/70">
+            Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, sortedGames.length)} of {sortedGames.length} games
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="app-btn app-btn-secondary"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+              className="app-btn app-btn-secondary"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeCreditsGame && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

@@ -4,7 +4,6 @@ import random from "../assets/random.png";
 import { useNavigate } from "react-router";
 import useImages from "../hooks/useImages";
 import Masonry from "react-masonry-css";
-import InfiniteScroll from "react-infinite-scroll-component";
 import Spinner from "../components/Spinner";
 
 import frame11_0 from "../assets/Frames/1.1/frame0.png";
@@ -72,26 +71,26 @@ const Photography = () => {
   const navigate = useNavigate();
   const { data: images, loading, error } = useImages("photography");
   const [imageRatioByKey, setImageRatioByKey] = useState({});
-  const [displayedImages, setDisplayedImages] = useState([]);
-  const [hasMore, setHasMore] = useState(true);
-
-  const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const [page, setPage] = useState(1);
+  const imagesPerPage = 35;
+  const safeImages = images || [];
+  const totalPages = Math.max(1, Math.ceil(safeImages.length / imagesPerPage));
 
   useEffect(() => {
-    if (images.length > 0) {
-      setDisplayedImages(images.slice(0, 20));
-      setHasMore(images.length > 20);
-    }
-  }, [images]);
+    setPage(1);
+  }, [safeImages.length]);
 
-  const fetchMoreData = () => {
-    if (displayedImages.length >= images.length) {
-      setHasMore(false);
-      return;
-    }
-    const nextBatch = images.slice(displayedImages.length, displayedImages.length + 20);
-    setDisplayedImages(prev => [...prev, ...nextBatch]);
+  const displayedImages = safeImages.slice(
+    (page - 1) * imagesPerPage,
+    page * imagesPerPage
+  );
+
+  const goToPage = (nextPage) => {
+    const clamped = Math.min(Math.max(nextPage, 1), totalPages);
+    setPage(clamped);
   };
+
+  const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   const handleImageLoad = (key) => (event) => {
     const loadedImage = event.currentTarget;
@@ -143,24 +142,46 @@ const Photography = () => {
       {error && <p className="text-red-600">Unable to load photographs.</p>}
 
       <div className="mx-auto m-10 p-6 overflow-x-hidden">
-        <InfiniteScroll
-          dataLength={displayedImages.length}
-          next={fetchMoreData}
-          hasMore={hasMore}
-          loader={<h4>Loading...</h4>}
+        {safeImages.length > 0 && (
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-white/70">
+              Showing {(page - 1) * imagesPerPage + 1} - {Math.min(page * imagesPerPage, safeImages.length)} of {safeImages.length} photographs
+            </p>
+            {totalPages > 1 && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page === 1}
+                  className="app-btn app-btn-secondary"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(page + 1)}
+                  disabled={page === totalPages}
+                  className="app-btn app-btn-secondary"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        <Masonry
+          breakpointCols={breakpointColumnsObj}
+          className="flex w-full justify-center overflow-visible pt-8"
+          columnClassName="px-4"
         >
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="flex w-full justify-center overflow-visible pt-8"
-            columnClassName="px-4"
-          >
-            {displayedImages.map((img, idx) => {
-              const key = img.id || idx;
-              const ratioKey = imageRatioByKey[key];;
-              const frame = pickFrameForImage(ratioKey, img.name || img.id || idx);
-              const frameBorderPx = frame?.borderPx ?? 6;
-              const shouldFlip = ratioKey === "3:4";
-              const frameTransform = shouldFlip ? "rotate(90deg) scale(1.3333)" : undefined;
+          {displayedImages.map((img, idx) => {
+            const globalIndex = (page - 1) * imagesPerPage + idx;
+            const key = img.id || globalIndex;
+            const ratioKey = imageRatioByKey[key];
+            const frame = pickFrameForImage(ratioKey, img.name || img.id || idx);
+            const frameBorderPx = frame?.borderPx ?? 6;
+            const shouldFlip = ratioKey === "3:4";
+            const frameTransform = shouldFlip ? "rotate(90deg) scale(1.3333)" : undefined;
 
             return (
               <button
@@ -168,9 +189,9 @@ const Photography = () => {
                 type="button"
                 className="mb-20 sm:mb-12 cursor-pointer block w-full bg-transparent p-0 shadow-none"
                 onClick={() => {
-                  navigate(`/photography/${idx}`);
+                  navigate(`/photography/${globalIndex}`);
                 }}
-                aria-label={`Open photo ${img.name || idx + 1}`}
+                aria-label={`Open photo ${img.name || globalIndex + 1}`}
               >
                 <div
                   className="relative w-full overflow-hidden"
@@ -232,7 +253,6 @@ const Photography = () => {
             );
           })}
           </Masonry>
-        </InfiniteScroll>
       </div>
     </div>
   );
