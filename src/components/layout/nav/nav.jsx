@@ -17,48 +17,22 @@ const Nav = () => {
   const style = "text-[#ff0000] text-4xl font-bold";
   const navigate = useNavigate();
   const [showFire, setShowFire] = useState(false);
-  const [holiday, setHoliday] = useState(() => {
-    if (typeof window === "undefined") return null;
-    const saved = window.localStorage.getItem("holidayOverride");
-    if (saved === "aug24" || saved === "may4" || saved === "mar10") {
-      return saved;
-    }
-    const today = new Date();
+  const [overrideHoliday, setOverrideHoliday] = useState(null);
+
+  const getHoliday = (today = new Date()) => {
     if (today.getMonth() === 7 && today.getDate() === 24) return "aug24";
     if (today.getMonth() === 4 && today.getDate() === 4) return "may4";
     if (today.getMonth() === 2 && today.getDate() === 10) return "mar10";
     return null;
-  });
+  };
+
+  const holiday = overrideHoliday ?? getHoliday();
 
   const handleLogout = async () => {
     await logout();
   };
 
-  useEffect(() => {
-    const resolveHoliday = () => {
-      const saved = window.localStorage.getItem("holidayOverride");
-      if (saved === "aug24" || saved === "may4" || saved === "mar10") {
-        return saved;
-      }
-      const today = new Date();
-      if (today.getMonth() === 7 && today.getDate() === 24) return "aug24";
-      if (today.getMonth() === 4 && today.getDate() === 4) return "may4";
-      if (today.getMonth() === 2 && today.getDate() === 10) return "mar10";
-      return null;
-    };
-
-    const updateHoliday = () => setHoliday(resolveHoliday());
-
-    updateHoliday();
-    window.addEventListener("holidayOverrideChanged", updateHoliday);
-    window.addEventListener("storage", updateHoliday);
-    return () => {
-      window.removeEventListener("holidayOverrideChanged", updateHoliday);
-      window.removeEventListener("storage", updateHoliday);
-    };
-  }, []);
-
-  const skullImage = holiday === "aug24" ? balloons1 : holiday === "may4" ? starwars2 : holiday === "mar10" ? mario1 : skull;
+  const skullImage = holiday === "mar10" ? mario1 : holiday === "aug24" ? balloons1 : holiday === "may4" ? starwars2 : skull;
   const hoverFireImage = holiday === "aug24" ? balloons2 : holiday === "may4" ? starwars1 : coolFire;
 
   return (
