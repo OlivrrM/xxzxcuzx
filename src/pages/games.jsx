@@ -189,7 +189,7 @@ const Games = () => {
                     {game.githubLink && (
                       <div className="flex justify-start md:justify-center">
                         {game.gameType === "hacks" ? (
-                          <p onClick={() => navigate(`/games/${encodeURIComponent(slugify(game.name))}/patches`)} className="text-blue-700">Patch Now</p>) : (
+                          <p onClick={() => navigate(`/games/${encodeURIComponent(slugify(game.name))}`)} className="text-blue-700">Patch Now</p>) : (
                             <a
                               href={game.githubLink}
                               target="_blank"
