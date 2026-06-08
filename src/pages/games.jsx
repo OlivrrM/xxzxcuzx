@@ -117,12 +117,13 @@ const Games = () => {
                     backgroundImage: game.backGroundImageFile ? `url('${game.backGroundImageFile}')` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
+                    filter: 'brightness(0.5)',
                   }}>
                 </div>
                 <div 
                   className="absolute inset-0 pointer-events-none"
                   style={{
-                    backgroundColor: `rgba(0, 0, 0, 0.35})`,
+                    backgroundColor: `rgba(0, 0, 0, 0.1})`,
                   }}>
                 </div>
                 <div className="absolute inset-0 pointer-events-none"></div>
