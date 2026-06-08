@@ -72,8 +72,6 @@ const Dashboard = () => {
   const [gamesForm, setGamesForm] = useState(sectionConfigs.games.initialForm());
   const [billboardForm, setBillboardForm] = useState(sectionConfigs.billboard.initialForm());
 
-  console.log("[Inital games form] ", gamesForm);
-
   const isValidHexColor = (value) => /^#[0-9A-Fa-f]{6}$/.test(value || "");
 
   useEffect(() => {
@@ -268,10 +266,7 @@ const Dashboard = () => {
 
     try {
       const metadata = await parseMetadataSafe(file, "parsePhotoFileMeta");
-      console.log("[photo] full metadata (multiple)", {
-        fileName: file.name,
-        metadata,
-      });
+
       const extracted = extractPhotoExifFields(metadata, file);
       const resolvedCreated = extracted.createdDate || "00-00-0000";
       const resolvedModified = extracted.modifiedDate || fallbackDate;
@@ -340,10 +335,15 @@ const Dashboard = () => {
     setPhotoTransferDate("");
   };
 
+  const resolvePriority = (value) => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+  };
+
   const sortByPriority = (items) =>
     [...(items || [])].sort((a, b) => {
-      const aPriority = a.priority ?? Infinity;
-      const bPriority = b.priority ?? Infinity;
+      const aPriority = resolvePriority(a.priority) ?? Infinity;
+      const bPriority = resolvePriority(b.priority) ?? Infinity;
       if (aPriority !== bPriority) return aPriority - bPriority;
       return (a.id || "").localeCompare(b.id || "");
     });
@@ -351,8 +351,32 @@ const Dashboard = () => {
   const normalizePriorityItems = (items) =>
     sortByPriority(items).map((entry, index) => ({
       ...entry,
-      priority: entry.priority != null ? entry.priority : index + 1,
+      priority: index + 1,
     }));
+
+  const persistNormalizedPriorities = async (collection, items) => {
+    const normalizedItems = normalizePriorityItems(items);
+    const originalById = items.reduce((map, item) => {
+      if (item?.id) map[item.id] = item;
+      return map;
+    }, {});
+
+    const updates = normalizedItems.filter((item) => {
+      const original = originalById[item.id];
+      const originalPriority = resolvePriority(original?.priority);
+      return original && originalPriority !== item.priority;
+    });
+
+    if (updates.length > 0) {
+      await Promise.all(
+        updates.map((item) =>
+          updateDoc(doc(db, collection, item.id), { priority: item.priority })
+        )
+      );
+    }
+
+    return normalizedItems;
+  };
 
   const softwareItemsSorted = sortByPriority(softwareItems);
   const gamesItemsSorted = sortByPriority(gamesItems);
@@ -500,11 +524,6 @@ const Dashboard = () => {
 
   const handlePhotoFileSelect = async (e) => {
     const files = Array.from(e.target.files || []);
-    console.log("[photo] handlePhotoFileSelect", {
-      mode: photoUploadMode,
-      fileCount: files.length,
-      fileNames: files.map((file) => file.name),
-    });
 
     if (files.length === 0) {
       clearPhotoMassMeta();
@@ -515,7 +534,6 @@ const Dashboard = () => {
     if (photoUploadMode === "multiple") {
       clearPhotoMassMeta();
       const metadataList = await Promise.all(files.map((file) => parsePhotoFileMeta(file)));
-      console.log("[photo] parsed multiple metadata", metadataList);
       setPhotoMassMeta(metadataList);
       setPhotoForm((prev) => ({
         ...prev,
@@ -540,15 +558,9 @@ const Dashboard = () => {
 
     try {
       const metadata = await parseMetadataSafe(singleFile, "handlePhotoFileSelect");
-      console.log("[photo] full metadata (single)", {
-        fileName: singleFile.name,
-        metadata,
-      });
+
       const extracted = extractPhotoExifFields(metadata, singleFile);
-      console.log("[photo] parsed single metadata", {
-        fileName: singleFile.name,
-        extracted,
-      });
+
 
       setPhotoForm((prev) => {
         const next = { ...prev };
@@ -565,14 +577,7 @@ const Dashboard = () => {
         }
         return next;
       });
-      console.log("[photo] applied autofill from upload", {
-        preferredDateSource: photoDateSource,
-        appliedDate:
-          photoDateSource === "modified"
-            ? extracted.modifiedDate || extracted.createdDate || "00-00-0000"
-            : extracted.createdDate || extracted.modifiedDate || "00-00-0000",
-        cameraModel: extracted.cameraModel,
-      });
+
     } catch (error) {
       console.warn("Failed to read EXIF metadata", error);
     }
@@ -580,18 +585,12 @@ const Dashboard = () => {
 
   const setDateFromExif = async (kind) => {
     const currentFile = photoForm.file || photoForm.massFiles[0];
-    console.log("[photo] setDateFromExif requested", {
-      kind,
-      hasCurrentFile: Boolean(currentFile),
-      fileName: currentFile?.name,
-    });
+
     if (!currentFile) return;
 
     try {
       const metadata = await parseMetadataSafe(currentFile, "setDateFromExif");
-      
-      console.log("[photo] full metadata for setDateFromExif ", metadata);
-      
+            
       const extracted = extractPhotoExifFields(metadata, currentFile);
       const sourceDate =
         kind === "created" ? extracted.createdDate : extracted.modifiedDate;
@@ -602,11 +601,7 @@ const Dashboard = () => {
         dateCreated: resolvedDate,
       }));
       setPhotoDateSource(kind);
-      console.log("[photo] date applied from selected source", {
-        kind,
-        fileName: currentFile.name,
-        appliedDate: resolvedDate,
-      });
+
     } catch (error) {
       setPhotoForm((prev) => ({
         ...prev,
@@ -1067,10 +1062,9 @@ const Dashboard = () => {
     beginSectionWork("software", `Moving ${direction}...`);
     try {
       throwIfCancelled("software");
-      
-      const orderedItems = normalizePriorityItems(softwareItems);
 
-      // Find current item index and target item
+      const orderedItems = await persistNormalizedPriorities("software", softwareItems);
+
       const currentIndex = orderedItems.findIndex((i) => i.id === item.id);
       if (currentIndex === -1) return;
 
@@ -1288,7 +1282,7 @@ const Dashboard = () => {
     try {
       throwIfCancelled("games");
 
-      const orderedItems = normalizePriorityItems(gamesItems);
+      const orderedItems = await persistNormalizedPriorities("games", gamesItems);
 
       const currentIndex = orderedItems.findIndex((i) => i.id === item.id);
       if (currentIndex === -1) return;

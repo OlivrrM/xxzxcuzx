@@ -77,8 +77,6 @@ const Games = () => {
           {visibleGames.map((game, index) => {
           const isReversed = index % 2 === 1;
 
-          console.log("GAME TYPE: ", game.gameType);
-
           const gameMoreInfo = [
             { label: "Released status", value: formatStatus(game.releasedStatus) },
             { label: "Updated", value: game.updated },
@@ -191,7 +189,7 @@ const Games = () => {
                     {game.githubLink && (
                       <div className="flex justify-start md:justify-center">
                         {game.gameType === "hacks" ? (
-                          <p className="text-blue-700">Patch Now</p>) : (
+                          <p onClick={() => navigate(`/games/${encodeURIComponent(slugify(game.name))}/patches`)} className="text-blue-700">Patch Now</p>) : (
                             <a
                               href={game.githubLink}
                               target="_blank"

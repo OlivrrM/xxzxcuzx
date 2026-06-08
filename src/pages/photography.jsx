@@ -142,33 +142,6 @@ const Photography = () => {
       {error && <p className="text-red-600">Unable to load photographs.</p>}
 
       <div className="mx-auto m-10 p-6 overflow-x-hidden">
-        {safeImages.length > 0 && (
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-white/70">
-              Showing {(page - 1) * imagesPerPage + 1} - {Math.min(page * imagesPerPage, safeImages.length)} of {safeImages.length} photographs
-            </p>
-            {totalPages > 1 && (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => goToPage(page - 1)}
-                  disabled={page === 1}
-                  className="app-btn app-btn-secondary"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={() => goToPage(page + 1)}
-                  disabled={page === totalPages}
-                  className="app-btn app-btn-secondary"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        )}
         <Masonry
           breakpointCols={breakpointColumnsObj}
           className="flex w-full justify-center overflow-visible pt-8"
@@ -254,6 +227,33 @@ const Photography = () => {
           })}
           </Masonry>
       </div>
+              {safeImages.length > 0 && (
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-white/70">
+              Showing {(page - 1) * imagesPerPage + 1} - {Math.min(page * imagesPerPage, safeImages.length)} of {safeImages.length} photographs
+            </p>
+            {totalPages > 1 && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page === 1}
+                  className="app-btn app-btn-secondary"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(page + 1)}
+                  disabled={page === totalPages}
+                  className="app-btn app-btn-secondary"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 };
