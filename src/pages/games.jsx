@@ -31,7 +31,6 @@ const Games = () => {
   const { data: games = [], loading, error } = useImages("games");
   const [activeCreditsId, setActiveCreditsId] = useState(null);
   const [activeMoreInfoId, setActiveMoreInfoId] = useState(null);
-  const [hoveredGameId, setHoveredGameId] = useState(null);
   const [page, setPage] = useState(1);
   const pageSize = 12;
 
@@ -107,8 +106,6 @@ const Games = () => {
           return (
             <li key={game.id} className="w-full">
               <div 
-                onMouseEnter={() => setHoveredGameId(game.id)}
-                onMouseLeave={() => setHoveredGameId(null)}
                 className={`p-4 flex flex-col ${isReversed ? 'md:flex-row-reverse' : 'md:flex-row'} items-stretch gap-4 relative overflow-hidden`} 
                 style={{
                   ...(game.borderColor ? { border: `2px solid ${game.borderColor}` } : {}),
@@ -120,14 +117,12 @@ const Games = () => {
                     backgroundImage: game.backGroundImageFile ? `url('${game.backGroundImageFile}')` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    opacity: hoveredGameId === game.id ? 0.65 : 0.55,
-                    transform: hoveredGameId === game.id ? 'scale(1.1)' : 'scale(1)',
                   }}>
                 </div>
                 <div 
                   className="absolute inset-0 pointer-events-none"
                   style={{
-                    backgroundColor: `rgba(0, 0, 0, ${hoveredGameId === game.id ? 0.25 : 0.35})`,
+                    backgroundColor: `rgba(0, 0, 0, 0.35})`,
                   }}>
                 </div>
                 <div className="absolute inset-0 pointer-events-none"></div>
