@@ -188,8 +188,7 @@ const Photography = () => {
       <div className="mx-auto m-10 p-6 overflow-x-hidden">
         {safeImages.length > 0 && (
           <p className="mb-4 text-sm text-white/70">
-            Showing {displayedImages.length} of{" "}
-            {safeImages.length} photographs
+            Showing {safeImages.length} photographs
           </p>
         )}
 
