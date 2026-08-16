@@ -73,6 +73,39 @@ const Dashboard = () => {
   const [billboardForm, setBillboardForm] = useState(sectionConfigs.billboard.initialForm());
 
   const isValidHexColor = (value) => /^#[0-9A-Fa-f]{6}$/.test(value || "");
+  const isValidYouTubeUrl = (value) => {
+    const input = String(value || "").trim();
+    if (!input) return true;
+
+    try {
+      const normalized = /^https?:\/\//i.test(input) ? input : `https://${input}`;
+      const parsedUrl = new URL(normalized);
+      const host = parsedUrl.hostname.replace(/^www\./i, "").toLowerCase();
+
+      if (host === "youtu.be") {
+        const id = parsedUrl.pathname.split("/").filter(Boolean)[0];
+        return Boolean(id);
+      }
+
+      if (host === "youtube.com" || host === "m.youtube.com") {
+        if (parsedUrl.pathname === "/watch") {
+          return Boolean(parsedUrl.searchParams.get("v"));
+        }
+
+        if (parsedUrl.pathname.startsWith("/embed/")) {
+          return Boolean(parsedUrl.pathname.split("/")[2]);
+        }
+
+        if (parsedUrl.pathname.startsWith("/shorts/")) {
+          return Boolean(parsedUrl.pathname.split("/")[2]);
+        }
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -461,6 +494,7 @@ const Dashboard = () => {
       detailImagePaths: [],
       hackPatchLink: "",
       url: "",
+      youtubeUrl: "",
       description: "",
     }));
   };
@@ -1110,6 +1144,11 @@ const Dashboard = () => {
       return;
     }
 
+    if (!isValidYouTubeUrl(gamesForm.youtubeUrl)) {
+      setSectionStatus("games", "Error: Only valid YouTube links are allowed.");
+      return;
+    }
+
     beginSectionWork("games", "Saving...");
     try {
       const runGamesEdit = async () => {
@@ -1510,6 +1549,7 @@ const Dashboard = () => {
     gamesForm.detailFiles.length === 0 &&
     !gamesForm.hackPatchLink &&
     !gamesForm.url &&
+    !gamesForm.youtubeUrl &&
     !gamesForm.description;
 
   const softwareClearDisabled =
@@ -1573,6 +1613,7 @@ const Dashboard = () => {
         gamesForm.detailFiles.length === 0 &&
         gamesForm.hackPatchLink === gamesEditSnapshot.hackPatchLink &&
         gamesForm.url === gamesEditSnapshot.url &&
+        gamesForm.youtubeUrl === gamesEditSnapshot.youtubeUrl &&
         gamesForm.description === gamesEditSnapshot.description &&
         !gamesForm.file &&
         !gamesForm.backgroundImageFile &&
@@ -1644,6 +1685,7 @@ const Dashboard = () => {
       gamesForm.detailFiles.length === 0 &&
       gamesForm.hackPatchLink === gamesEditSnapshot.hackPatchLink &&
       gamesForm.url === gamesEditSnapshot.url &&
+      gamesForm.youtubeUrl === gamesEditSnapshot.youtubeUrl &&
       gamesForm.description === gamesEditSnapshot.description &&
       !gamesForm.file &&
       gamesForm.massFiles.length === 0);
@@ -2225,6 +2267,7 @@ const Dashboard = () => {
                       : [],
                     hackPatchLink: item.hackPatchLink || "",
                     url: item.url || "",
+                    youtubeUrl: item.youtubeUrl || "",
                     description: item.description || "",
                     backGroundImageFile: item.backGroundImageFile || "",
                   };

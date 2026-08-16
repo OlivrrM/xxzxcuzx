@@ -140,6 +140,7 @@ export const sectionConfigs = {
             hackPatchLink: "",
             githubLink: "",
             url: "",
+            youtubeUrl: "",
             description: "",
         }),
         buildPayload: (form) => {
@@ -149,6 +150,7 @@ export const sectionConfigs = {
                 borderColor: isHexColor(form.borderColor) ? form.borderColor : undefined,
                 textColor: isHexColor(form.textColor) ? form.textColor : undefined,
                 url: normalizeString(form.url),
+                youtubeUrl: normalizeString(form.youtubeUrl),
                 description: normalizeString(form.description),
                 releasedStatus: normalizeString(form.releasedStatus),
                 updated: normalizeString(form.updated),

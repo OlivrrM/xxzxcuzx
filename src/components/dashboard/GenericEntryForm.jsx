@@ -324,6 +324,26 @@ const GenericEntryForm = ({
       )}
 
       {isGames && (
+        <div>
+          <label
+            htmlFor={`${idPrefix}-youtube-url`}
+            className="block text-start text-sm font-medium mb-1"
+          >
+            YouTube URL (optional)
+          </label>
+          <input
+            id={`${idPrefix}-youtube-url`}
+            type="url"
+            value={formValues.youtubeUrl || ""}
+            onChange={(e) => onChange("youtubeUrl", e.target.value)}
+            className="app-input w-full"
+            placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+          />
+          <p className="text-xs text-white/70 mt-1">Only YouTube links are accepted.</p>
+        </div>
+      )}
+
+      {isGames && (
         <div className="space-y-3">
           <div>
             <label

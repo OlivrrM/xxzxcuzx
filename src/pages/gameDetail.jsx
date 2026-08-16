@@ -49,6 +49,41 @@ const parseGameEmbed = (value) => {
   };
 };
 
+const extractYouTubeVideoId = (value) => {
+  const input = String(value || "").trim();
+  if (!input) return null;
+
+  try {
+    const normalized = /^https?:\/\//i.test(input) ? input : `https://${input}`;
+    const parsedUrl = new URL(normalized);
+    const host = parsedUrl.hostname.replace(/^www\./i, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      return parsedUrl.pathname.split("/").filter(Boolean)[0] || null;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (parsedUrl.pathname === "/watch") {
+        return parsedUrl.searchParams.get("v") || null;
+      }
+
+      if (parsedUrl.pathname.startsWith("/embed/") || parsedUrl.pathname.startsWith("/shorts/")) {
+        return parsedUrl.pathname.split("/")[2] || null;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const toYouTubeEmbedSrc = (value) => {
+  const videoId = extractYouTubeVideoId(value);
+  if (!videoId) return null;
+  return `https://www.youtube.com/embed/${videoId}`;
+};
+
 const GameDetail = () => {
   const [showMoreInfo, setShowMoreInfo] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
@@ -136,6 +171,7 @@ const GameDetail = () => {
   const showDetailImageGrid = gameType === "pc games" || gameType === "hacks";
   const detailImages = Array.isArray(game.detailImages) ? game.detailImages : [];
   const embed = parseGameEmbed(game.url);
+  const youtubeEmbedSrc = toYouTubeEmbedSrc(game.youtubeUrl);
   const embedRatio =
     embed?.width && embed?.height ? `${embed.width} / ${embed.height}` : "16 / 9";
   const embedMaxWidth = embed?.width ? `${embed.width}px` : undefined;
@@ -179,6 +215,28 @@ const GameDetail = () => {
       <div className="max-w-5xl mx-auto text-center flex flex-col items-center gap-6">
         {game.description && (
           <p className="text-white">{game.description}</p>
+        )}
+
+                {youtubeEmbedSrc && (
+          <section className="w-full max-w-4xl pt-4">
+            <div
+              className="relative w-full overflow-hidden border-[1px] bg-black/80"
+              style={{
+                aspectRatio: "16 / 9",
+                ...(game.borderColor ? { borderColor: game.borderColor } : { borderColor: "rgba(255,255,255,0.25)" }),
+              }}
+            >
+              <iframe
+                src={youtubeEmbedSrc}
+                title={`${game.name || "Game"} video`}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+          </section>
         )}
 
         {showDetailImageGrid && detailImages.length > 0 && (

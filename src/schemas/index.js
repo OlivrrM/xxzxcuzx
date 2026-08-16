@@ -1,5 +1,39 @@
 import { z } from 'zod';
 
+const isYouTubeUrl = (value) => {
+  const input = String(value || '').trim();
+  if (!input) return false;
+
+  try {
+    const normalized = /^https?:\/\//i.test(input) ? input : `https://${input}`;
+    const parsedUrl = new URL(normalized);
+    const host = parsedUrl.hostname.replace(/^www\./i, '').toLowerCase();
+
+    if (host === 'youtu.be') {
+      const id = parsedUrl.pathname.split('/').filter(Boolean)[0];
+      return Boolean(id);
+    }
+
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      if (parsedUrl.pathname === '/watch') {
+        return Boolean(parsedUrl.searchParams.get('v'));
+      }
+
+      if (parsedUrl.pathname.startsWith('/embed/')) {
+        return Boolean(parsedUrl.pathname.split('/')[2]);
+      }
+
+      if (parsedUrl.pathname.startsWith('/shorts/')) {
+        return Boolean(parsedUrl.pathname.split('/')[2]);
+      }
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+};
+
 export const photographySchema = z.object({
   name: z.string(),
   src: z.string().url(),
@@ -45,6 +79,12 @@ export const gamesSchema = z.object({
   textColor: z.string().optional(),
   // `url` is used for embedded web games (iframe or direct URL)
   url: z.string().optional(),
+  youtubeUrl: z
+    .string()
+    .refine((value) => isYouTubeUrl(value), {
+      message: 'YouTube URL must be a valid youtube.com or youtu.be link',
+    })
+    .optional(),
   description: z.string().optional(),
   releasedStatus: z.string().optional(),
   updated: z.string().optional(),

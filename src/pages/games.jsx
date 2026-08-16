@@ -128,7 +128,7 @@ const Games = () => {
                 </div>
                 <div className="absolute inset-0 pointer-events-none"></div>
 
-                <div id="test" className={`w-fit flex flex-col md:flex-row relative z-10`}>
+                <div id="test" className={`w-full md:w-fit flex flex-col md:flex-row relative z-10`}>
                   <div className={`w-full md:w-[260px] flex items-center justify-center p-2 ${isReversed ? 'md:order-2 md:ml-4' : 'md:order-1 md:mr-2'}`}>
                     {imageSrc ? (
                       <img src={imageSrc} alt={game.name || "Game"} className="w-full h-auto object-cover border"

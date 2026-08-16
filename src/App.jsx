@@ -23,7 +23,7 @@ function App() {
   const shouldShowFirebaseError = Boolean(firebaseInitError) || firebaseConfigMissingEnv.length > 0;
 
   return (
-    <div className="page-container flex flex-col min-h-screen items-center">
+    <div className="page-container flex flex-col min-h-[100svh] items-center">
       <Nav />
 
       {shouldShowFirebaseError && (
